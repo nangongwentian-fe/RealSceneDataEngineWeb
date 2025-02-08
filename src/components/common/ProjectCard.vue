@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { deleteProject } from '@/apis/project';
+import { deleteProject, threeDGSToObj } from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
+import { ref } from 'vue';
 
 const props = defineProps<{
     data: Project
@@ -24,6 +25,32 @@ const handleDeleteProject = () => {
         ElMessage.error('删除项目失败');
     })
 }
+
+const handleExportToObj = () => {
+    threeDGSToObjLoadingDialogVisible.value = true;
+    threeDGSToObj(props.data.id).then((res) => {
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        const contentDisposition = res.headers['content-disposition'];
+        let fileName = `${props.data.name}.zip`;
+        if (contentDisposition) {
+            const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
+            if (fileNameMatch && fileNameMatch.length === 2) fileName = fileNameMatch[1];
+        }
+        link.href = url;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        ElMessage.success('导出成功');
+    }).catch(() => {
+        ElMessage.error('导出失败');
+    }).finally(() => {
+        threeDGSToObjLoadingDialogVisible.value = false;
+    })
+}
+
+const threeDGSToObjLoadingDialogVisible = ref(false);
 </script>
 
 <template>
@@ -36,17 +63,29 @@ const handleDeleteProject = () => {
                 <div class="name">{{ props.data.name }}</div>
             </div>
             <div class="right-container">
-                <el-popover placement="bottom-start" trigger="hover">
+                <el-popover placement="bottom-start" trigger="hover" width="220">
                     <template #reference>
                         <el-icon size="20"><MoreFilled /></el-icon>
                     </template>
                     <div class="btn-container">
                         <el-button text @click="handleDownloadThreeDGSData" w="full" m="0">导出3dgs数据</el-button>
+                        <el-button text @click="handleExportToObj" w="full" m="0">转化成Mesh导出(Obj格式)</el-button>
                         <el-button text @click="handleDeleteProject" w="full" m="0">删除项目</el-button>
                     </div>
                 </el-popover>
             </div>
         </div>
+        <el-dialog
+            v-model="threeDGSToObjLoadingDialogVisible"
+            title="Tips"
+            width="500"
+            :append-to-body="true"
+            :show-close="false"
+            :close-on-click-modal="false"
+            :close-on-press-escape="false"
+        >
+            3DGS数据正在转化Mesh中, 这个过程不会太久(小场景约30s~1min, 大场景约4min)且只有第一次转化时需要等待, 请稍等片刻...(转化完成后会自动下载)
+        </el-dialog>
     </el-card>
 </template>
 

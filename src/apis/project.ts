@@ -11,3 +11,5 @@ export const getProjectList = (page: number, pageSize: number) => request.get<Ge
 export const getProjectStatus = (processedFileId: number) => request.get<GetProjectStatusResponseData>(`${import.meta.env.VITE_API_BASE_URL}/threeDGS/status/${processedFileId}`)
 
 export const deleteProject = (projectId: number) => request.delete(`${import.meta.env.VITE_API_BASE_URL}/projects/${projectId}`)
+
+export const threeDGSToObj = (projectId: number) => request.post(`${import.meta.env.VITE_API_BASE_URL}/threeDGS/toObj?project_id=${projectId}`, {}, { responseType: 'blob' })

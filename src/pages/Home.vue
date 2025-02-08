@@ -39,7 +39,6 @@ const updateProjectList = () => {
     getProjectList(page.value, pageSize.value).then((getProjectListRes) => {
         console.log('获取项目列表成功', getProjectListRes);
         projectList.value = getProjectListRes.data.data;
-        total.value = projectList.value.length;
         trainedProjectList.value = projectList.value.filter((project) => {
             if(project.processed_file.status === 'trained') {
                 return true;
@@ -47,6 +46,7 @@ const updateProjectList = () => {
                 return false;
             }
         })
+        total.value = trainedProjectList.value.length;
         failedProjectList.value = projectList.value.filter((project) => {
             if(project.processed_file.status === 'failed') {
                 return true;
