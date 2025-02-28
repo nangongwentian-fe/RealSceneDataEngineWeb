@@ -11,10 +11,10 @@ const emits = defineEmits<{
     deleteProjectSuccess: []
 }>()
 const handleViewProject = () => {
-    window.open(`${import.meta.env.VITE_3DGS_VIEWER_URL}?load=${import.meta.env.VITE_API_BASE_URL}/files/${props.data.processed_file.result_url}`, "_blank")
+    window.open(`${window.realSceneDataEngineConfig.threeDGSViewer}?load=${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.processed_file.result_url}`, "_blank")
 }
 const handleDownloadThreeDGSData = () => {
-    window.open(`${import.meta.env.VITE_API_BASE_URL}/files/${props.data.processed_file.result_url}`, "_blank")
+    window.open(`${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.processed_file.result_url}`, "_blank")
 }
 const handleDeleteProject = () => {
     deleteProject(props.data.id).then((deleteProjectRes) => {

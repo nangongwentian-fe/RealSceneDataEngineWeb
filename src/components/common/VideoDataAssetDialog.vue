@@ -7,7 +7,7 @@ const props = defineProps<{
     data: StaticFile
 }>()
 const videoUrl = computed(() => {
-    return `${import.meta.env.VITE_API_BASE_URL}/files/${props.data.filename}`;
+    return `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.filename}`;
 })
 </script>
 

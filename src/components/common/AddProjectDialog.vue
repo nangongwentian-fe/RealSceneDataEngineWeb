@@ -24,7 +24,7 @@ const dataAssetList = ref<DataAsset[]>([]);
     const getAssetListResponse = await getAssetListAll();
     console.log('数据资源列表:', getAssetListResponse);
     dataAssetList.value = getAssetListResponse.data.data;
-    form.dataAssetId = dataAssetList.value[0].static_file.id;
+    form.dataAssetId = dataAssetList.value[0]?.static_file.id;
 };
 updateAssetList();
 const adding = ref(false);
