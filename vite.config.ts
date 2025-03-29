@@ -5,6 +5,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import UnoCSS from 'unocss/vite'
 import path from "path"
+import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,6 +18,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
     UnoCSS(),
+    vueDevTools(),
   ],
   resolve: {
     // 配置路径别名

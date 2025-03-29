@@ -16,3 +16,10 @@ export interface AddDataAssetOptions {
     name: string,
     static_file_id: number
 }
+
+export interface DataAssetsImagePreview {
+    id: number,
+    original_filename: string,
+    filename: string,
+    path: string,
+}

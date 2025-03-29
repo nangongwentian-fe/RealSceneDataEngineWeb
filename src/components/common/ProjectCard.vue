@@ -2,7 +2,7 @@
 import { deleteProject, threeDGSToObj } from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
     data: Project
@@ -51,13 +51,17 @@ const handleExportToObj = () => {
 }
 
 const threeDGSToObjLoadingDialogVisible = ref(false);
+
+const projectImage = computed(() => {
+    return `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.cover_image.filename}`
+})
 </script>
 
 <template>
     <el-card class="project-card" shadow="hover" :style="{
         maxWidth: '360px',
-    }" cursor="pointer" @click="handleViewProject">
-        <img src="@/assets/images/project-preview.jpg" h="200px" w="100%" >
+    }" cursor="pointer" @click="handleViewProject" w="320px">
+        <img :src="projectImage" h="200px" w="100%" object-contain bg="#f4f4f4" />
         <div class="info-container" py="10px" flex items-center justify-between>
             <div class="left-container" max-w="50%">
                 <div class="name">{{ props.data.name }}</div>

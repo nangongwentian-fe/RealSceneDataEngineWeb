@@ -15,7 +15,8 @@ export interface Project {
     id: number,
     name: string,
     processed_file: ProcessedFile,
-    static_file: StaticFile
+    static_file: StaticFile,
+    cover_image: StaticFile
 }
 
 export interface ProcessedFile {

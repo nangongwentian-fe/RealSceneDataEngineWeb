@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import Header from '@/components/common/Header.vue';
 import ProjectCard from '@/components/common/ProjectCard.vue';
-import { onUnmounted, ref } from 'vue';
+import { ref } from 'vue';
 import AssetsStoreDialog from '@/components/common/AssetsStoreDialog.vue';
-import AddProjectDialog from '@/components/common/AddProjectDialog.vue';
+import AddProjectDialog from '@/components/common/AddProjectDialog/AddProjectDialog.vue';
 import { getProjectList } from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
@@ -11,6 +11,7 @@ import { MessageBox } from '@element-plus/icons-vue';
 import ProcessingProjectDialog from '@/components/common/ProcessingProjectDialog.vue';
 // @ts-ignore
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { useUpdateProjectListSSEHook } from './useUpdateProjectListSSEHook';
 
 /**
  * @description 数据资源库弹窗是否可见
@@ -66,15 +67,11 @@ const updateProjectList = () => {
     })
 }
 updateProjectList();
-/**
- * 每30秒更新一次项目列表数据
- */
-const intervalCode = setInterval(() => {
-    updateProjectList()
-}, 30000)
-onUnmounted(() => {
-    clearInterval(intervalCode);
-})
+/** 使用 SSE 更新项目列表 */
+const {} = useUpdateProjectListSSEHook({
+    updateProjectList
+});
+
 const processingProjectDialogVisible = ref(false);
 const handleOpenProcessingProjectDialog = () => {
     processingProjectDialogVisible.value = true;

@@ -8,7 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AddDataAssetItemDialog: typeof import('./src/components/common/AddDataAssetItemDialog.vue')['default']
-    AddProjectDialog: typeof import('./src/components/common/AddProjectDialog.vue')['default']
+    AddProjectDialog: typeof import('./src/components/common/AddProjectDialog/AddProjectDialog.vue')['default']
     AssetsStoreDialog: typeof import('./src/components/common/AssetsStoreDialog.vue')['default']
     DataAssetListItem: typeof import('./src/components/common/DataAssetListItem.vue')['default']
     ElBadge: typeof import('element-plus/es')['ElBadge']
@@ -32,6 +32,7 @@ declare module 'vue' {
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     Header: typeof import('./src/components/common/Header.vue')['default']
+    ImageUpload: typeof import('./src/components/common/ImageUpload/ImageUpload.vue')['default']
     ProcessingProjectDialog: typeof import('./src/components/common/ProcessingProjectDialog.vue')['default']
     ProjectCard: typeof import('./src/components/common/ProjectCard.vue')['default']
     ProjectStatusCard: typeof import('./src/components/common/ProjectStatusCard.vue')['default']

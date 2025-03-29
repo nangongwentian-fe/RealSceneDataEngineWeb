@@ -1,5 +1,5 @@
 import { request } from ".";
-import type { AddDataAssetOptions, GetAssetListResponseData } from "./assetsTypes";
+import type { AddDataAssetOptions, DataAssetsImagePreview, GetAssetListResponseData } from "./assetsTypes";
 
 /**
  * @description 获取数据资源列表
@@ -33,3 +33,9 @@ export const addDataAsset = (options: AddDataAssetOptions) => request.post(`${wi
     ...options
 })
 
+/**
+ * @description 获取数据资源封面图列表
+ * @param dataAssetsId 数据资源id
+ * @returns 封面图列表
+ */
+export const getDataAssetsVideoImagePreviewList = (dataAssetsId: number) => request.get<DataAssetsImagePreview[]>(`${window.realSceneDataEngineConfig.apiBaseUrl}/data_resources/${dataAssetsId}/preview-images`)
