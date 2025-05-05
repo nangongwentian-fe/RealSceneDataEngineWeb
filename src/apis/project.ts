@@ -14,3 +14,13 @@ export const getProjectStatus = (processedFileId: number) => request.get<GetProj
 export const deleteProject = (projectId: number) => request.delete(`${window.realSceneDataEngineConfig.apiBaseUrl}/projects/${projectId}`)
 
 export const threeDGSToObj = (projectId: number) => request.post(`${window.realSceneDataEngineConfig.apiBaseUrl}/threeDGS/toObj?project_id=${projectId}`, {}, { responseType: 'blob' })
+
+export const importProject = (formData: FormData) => request.post(
+    `${window.realSceneDataEngineConfig.apiBaseUrl}/projects/import`, 
+    formData, 
+    { 
+        headers: { 
+            'Content-Type': 'multipart/form-data' 
+        } 
+    }
+);

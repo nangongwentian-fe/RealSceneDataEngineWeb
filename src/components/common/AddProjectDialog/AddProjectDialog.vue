@@ -85,7 +85,7 @@ const { adding, handleAddProject, onProjectCoverUploadSuccess } = useAddProjectH
                 <el-form-item label="项目封面:" prop="projectCoverFile">
                     <div class="content-container" w="100%">
                         <ImageUpload w="318px" h="200px" @image-upload-success="onProjectCoverUploadSuccess" @clear-image="clearUploadedImage" ref="imageUploadRef" />
-                        <div class="data-assets-image-preivew-list-container" w="100%" mt="10px" flex flex-wrap v-show="!form.projectCoverFile">
+                        <div class="data-assets-image-preivew-list-container" w="100%" mt="10px" v-show="!form.projectCoverFile">
                             <img 
                                 :src="getImageUrl(item.filename)" 
                                 alt="数据资源封面图" 
@@ -115,4 +115,9 @@ const { adding, handleAddProject, onProjectCoverUploadSuccess } = useAddProjectH
     </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.data-assets-image-preivew-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+</style>

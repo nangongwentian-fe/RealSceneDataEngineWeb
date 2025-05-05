@@ -12,7 +12,11 @@ import ProcessingProjectDialog from '@/components/common/ProcessingProjectDialog
 // @ts-ignore
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { useUpdateProjectListSSEHook } from './useUpdateProjectListSSEHook';
+import ImportProjectDialog from '@/components/common/ImportProjectDialog/index.vue';
+import { useUploadProject } from './useUploadProject';
 
+// 上传项目相关hook
+const { uploadProjectDialogVisible, handleUploadProjectBtnClick } = useUploadProject();
 /**
  * @description 数据资源库弹窗是否可见
  */
@@ -102,6 +106,14 @@ const handleDeleteProjectSuccess = () => {
                     <el-tooltip
                         class="box-item"
                         effect="dark"
+                        content="如果你有已经处理好的3dgs结果"
+                        placement="top"
+                    >
+                        <el-button type="primary" size="large" @click="handleUploadProjectBtnClick" mr="10px">导入项目</el-button>
+                    </el-tooltip>
+                    <el-tooltip
+                        class="box-item"
+                        effect="dark"
                         content="正在处理的项目"
                         placement="bottom"
                     >
@@ -130,6 +142,7 @@ const handleDeleteProjectSuccess = () => {
     <AssetsStoreDialog v-model="assetsStoreDialogVisible"/>
     <AddProjectDialog v-model="addProjectDialogVisible" @add-project-success="handleAddProjectSuccess" />
     <ProcessingProjectDialog v-model="processingProjectDialogVisible"  :processing-project-list="processingProjectList" :failed-project-list="failedProjectList"/>
+    <ImportProjectDialog v-model="uploadProjectDialogVisible" />
 </template>
 
 <style lang="scss" scoped></style>
