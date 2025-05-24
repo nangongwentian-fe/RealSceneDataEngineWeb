@@ -20,6 +20,7 @@ const props = defineProps<{
             <el-tab-pane label="正在转化">
                 <div class="pane-content" h="600px" v-show="props.processingProjectList.length > 0">
                     <el-scrollbar>
+                        <div class="tip text-red" v-show="props?.processingProjectList?.length > 0">任务正在自动排队处理, 请耐心等待...</div>
                         <div class="processing-projest-list" px="10px" py="10px">
                             <ProjectStatusCard v-for="project in props.processingProjectList" :key="project.id" mb="10px" :data="project" />
                         </div>
