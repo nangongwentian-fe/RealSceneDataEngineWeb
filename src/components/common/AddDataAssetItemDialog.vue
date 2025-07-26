@@ -16,6 +16,26 @@ const form = reactive<{
     name: '',
     video: null
 })
+// 上传进度 0-100
+const uploadProgress = ref(0);
+const uploadLoaded = ref(0);
+const uploadTotal = ref(0);
+
+// 文件大小格式化
+const humanFileSize = (bytes: number): string => {
+    if (!bytes) return '0 B';
+    const thresh = 1024;
+    if (Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+    const units = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    let u = -1;
+    do {
+        bytes /= thresh;
+        ++u;
+    } while (Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1) + ' ' + units[u];
+};
 // 处理文件上传
 const handleFileUpload = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -33,7 +53,12 @@ const handleAddDataAsset = () => {
         return;
     }
     adding.value = true;
-    upload(form.video).then((uploadRes) => {
+    // 开始上传文件并监听进度
+    upload(form.video!, ({ loaded, total, percent }) => {
+        uploadProgress.value = percent;
+        uploadLoaded.value = loaded;
+        uploadTotal.value = total;
+    }).then((uploadRes) => {
         console.log('视频上传结果:', uploadRes);
         const videoFileId = uploadRes.data.id;
         addDataAsset({
@@ -52,6 +77,12 @@ const handleAddDataAsset = () => {
         })
     }).catch(() => {
         ElMessage.error('视频文件上传失败，请重新尝试')
+    })
+    .finally(() => {
+        // 上传完成或失败后重置进度
+        uploadProgress.value = 0;
+        uploadLoaded.value = 0;
+        uploadTotal.value = 0;
     })
 }
 </script>
@@ -95,6 +126,13 @@ const handleAddDataAsset = () => {
                         </div>
                     </el-card>
                 </el-form-item>
+                <!-- 上传进度条 -->
+                <el-form-item v-if="adding" label="上传进度:" label-width="auto" class="upload-progress-item">
+                    <div class="progress-container">
+                        <el-progress :percentage="uploadProgress" style="flex:1" />
+                        <span class="progress-size">{{ humanFileSize(uploadLoaded) }} / {{ humanFileSize(uploadTotal) }}</span>
+                    </div>
+                </el-form-item>
             </el-form> 
             <div class="btn-container" flex justify-center>
                 <el-button type="primary" w="160px" size="large" @click="handleAddDataAsset" :loading="adding">新增</el-button>
@@ -103,4 +141,24 @@ const handleAddDataAsset = () => {
     </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.upload-progress-item {
+  :deep(.el-form-item__content) {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.progress-size {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+</style>
