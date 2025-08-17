@@ -2,7 +2,8 @@ export interface AddProjectResponseData {
     id: number,
     name: string,
     processed_file_id: number,
-    static_file_id: number
+    static_file_id: number,
+    project_cover_image_static_id: number
 }
 
 export interface GetProjectResponseData {
@@ -16,7 +17,8 @@ export interface Project {
     name: string,
     processed_file: ProcessedFile,
     static_file: StaticFile,
-    cover_image: StaticFile
+    cover_image: StaticFile,
+    algorithm: string
 }
 
 export interface ProcessedFile {
@@ -24,7 +26,8 @@ export interface ProcessedFile {
     file_id: number,
     folder_path: string,
     status: string,
-    result_url: string | null
+    result_url: string | null,
+    algorithm: string
 }
 
 export interface StaticFile {

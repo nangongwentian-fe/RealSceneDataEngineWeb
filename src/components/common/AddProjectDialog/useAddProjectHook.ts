@@ -35,7 +35,7 @@ export const useAddProjectHook = (params: AddProjectHookParams) => {
                             // 获取选择的id对应的数据资源
                             const dataAsset = params.dataAssetMap.get(params.form.dataAsset);
                             if(dataAsset) { // 如果数据资源存在
-                                addProject(params.form.projectName, dataAsset.static_file.id, uploadRes.data.id).then((addProjectRes) => {
+                                addProject(params.form.projectName, dataAsset.static_file.id, uploadRes.data.id, params.form.algorithm).then((addProjectRes) => {
                                     console.log('新增项目成功', addProjectRes);
                                     ElMessage.success('新增项目成功');
                                     adding.value = false;
@@ -54,7 +54,7 @@ export const useAddProjectHook = (params: AddProjectHookParams) => {
                 } else if(params.selectedDataAssetImagePreview.value) { // 用户选择的数据资源封面图
                     const dataAsset = params.dataAssetMap.get(params.form.dataAsset);
                     if(dataAsset) {
-                        addProject(params.form.projectName, dataAsset.static_file.id, params.selectedDataAssetImagePreview.value.id).then((addProjectRes) => {
+                        addProject(params.form.projectName, dataAsset.static_file.id, params.selectedDataAssetImagePreview.value.id, params.form.algorithm).then((addProjectRes) => {
                             console.log('新增项目成功', addProjectRes);
                             ElMessage.success('新增项目成功');
                             adding.value = false;

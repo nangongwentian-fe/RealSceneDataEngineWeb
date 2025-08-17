@@ -65,6 +65,7 @@ const projectImage = computed(() => {
         <div class="info-container" py="10px" flex items-center justify-between>
             <div class="left-container" max-w="50%">
                 <div class="name">{{ props.data.name }}</div>
+                <div class="algorithm" style="font-size: 12px; color: #888;">算法: {{ props.data.processed_file.algorithm }}</div>
             </div>
             <div class="right-container">
                 <el-popover placement="bottom-start" trigger="hover" width="220">

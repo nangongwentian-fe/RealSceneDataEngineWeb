@@ -9,7 +9,8 @@ export const useAddProjectFormHook = (params: AddProjectFormParams) => {
     const form = reactive<AddProjectForm>({
         projectName: '',
         dataAsset: undefined,
-        projectCoverFile: null
+        projectCoverFile: null,
+        algorithm: '3dgs', // 默认算法
     })
 
     const validdateProjectCover = (_rule: any, _value: string, callback: any) => {
@@ -26,7 +27,8 @@ export const useAddProjectFormHook = (params: AddProjectFormParams) => {
     const formRules = reactive<FormRules<typeof form>>({
         projectName: [{ required: true, message: '项目名称不能为空' }],
         dataAsset: [{ required: true, message: '数据资源不能为空' }],
-        projectCoverFile: [{ validator: validdateProjectCover, trigger: 'blur' }]
+        projectCoverFile: [{ validator: validdateProjectCover, trigger: 'blur' }],
+        algorithm: [{ required: true, message: '请选择算法' }],
     })
 
     /** 数据资源列表 */
@@ -93,6 +95,13 @@ export const useAddProjectFormHook = (params: AddProjectFormParams) => {
         return `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${filename}`
     }
 
+    const algorithmOptions = [
+        { label: '原始3DGS', value: '3dgs' },
+        { label: 'LP-3DGS', value: 'lp-3dgs' },
+        { label: 'GaussianPro', value: 'gaussianpro' },
+        { label: 'DashGaussian', value: 'dashgaussian' },
+    ];
+
     return {
         form,
         formRules,
@@ -105,14 +114,16 @@ export const useAddProjectFormHook = (params: AddProjectFormParams) => {
         selectedDataAssetImagePreview,
         clearDataAssetsSelected,
         clearUploadedImage,
-        dataAssetMap
+        dataAssetMap,
+        algorithmOptions
     }
 }
 
 export interface AddProjectForm {
     projectName: string,
     dataAsset: number | undefined,
-    projectCoverFile: File | null
+    projectCoverFile: File | null,
+    algorithm: string // 新增
 }
 
 export interface AddProjectFormParams {

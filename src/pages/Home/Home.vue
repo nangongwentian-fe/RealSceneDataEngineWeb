@@ -82,9 +82,14 @@ const handleOpenProcessingProjectDialog = () => {
 }
 
 const handleAddProjectSuccess = () => {
+    page.value = 1; // Reset to first page
     updateProjectList();
 }
 const handleDeleteProjectSuccess = () => {
+    updateProjectList();
+}
+
+const handleRefreshProcessingList = () => {
     updateProjectList();
 }
 </script>
@@ -141,7 +146,7 @@ const handleDeleteProjectSuccess = () => {
     <!-- 数据资源库对话框组件 -->
     <AssetsStoreDialog v-model="assetsStoreDialogVisible"/>
     <AddProjectDialog v-model="addProjectDialogVisible" @add-project-success="handleAddProjectSuccess" />
-    <ProcessingProjectDialog v-model="processingProjectDialogVisible"  :processing-project-list="processingProjectList" :failed-project-list="failedProjectList"/>
+    <ProcessingProjectDialog v-model="processingProjectDialogVisible"  :processing-project-list="processingProjectList" :failed-project-list="failedProjectList" @refresh-list="handleRefreshProcessingList"/>
     <ImportProjectDialog v-model="uploadProjectDialogVisible" />
 </template>
 

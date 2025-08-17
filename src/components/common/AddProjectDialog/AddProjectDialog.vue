@@ -31,7 +31,8 @@ const {
     clearDataAssetsSelected,
     clearUploadedImage,
     selectedDataAssetImagePreview,
-    dataAssetMap
+    dataAssetMap,
+    algorithmOptions
 } = useAddProjectFormHook({
     imageUploadRef
 });
@@ -80,6 +81,11 @@ const { adding, handleAddProject, onProjectCoverUploadSuccess } = useAddProjectH
                             :label="`${item.name}(${item.static_file.original_filename})`"
                             :value="item.id"
                         />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="选择算法:" prop="algorithm" required>
+                    <el-select v-model="form.algorithm" placeholder="请选择算法">
+                        <el-option v-for="item in algorithmOptions" :key="item.value" :label="item.label" :value="item.value" />
                     </el-select>
                 </el-form-item>
                 <el-form-item label="项目封面:" prop="projectCoverFile">
