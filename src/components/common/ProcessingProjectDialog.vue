@@ -7,13 +7,6 @@ const props = defineProps<{
     processingProjectList: Project[],
     failedProjectList: Project[]
 }>()
-
-const emits = defineEmits(['refreshList']);
-
-const handleTaskCanceled = () => {
-    // 触发刷新列表事件
-    emits('refreshList');
-};
 </script>
 
 <template>
@@ -29,7 +22,7 @@ const handleTaskCanceled = () => {
                     <el-scrollbar>
                         <div class="tip text-red" v-show="props?.processingProjectList?.length > 0">任务正在自动排队处理, 请耐心等待...</div>
                         <div class="processing-projest-list" px="10px" py="10px">
-                            <ProjectStatusCard v-for="project in props.processingProjectList" :key="project.id" mb="10px" :data="project" @task-canceled="handleTaskCanceled" />
+                            <ProjectStatusCard v-for="project in props.processingProjectList" :key="project.id" mb="10px" :data="project" />
                         </div>
                     </el-scrollbar>
                 </div>
@@ -39,7 +32,7 @@ const handleTaskCanceled = () => {
                 <div class="pane-content" h="600px" v-show="props.failedProjectList.length > 0">
                     <el-scrollbar>
                         <div class="failed-project-list" px="10px" py="10px">
-                            <ProjectStatusCard v-for="project in props.failedProjectList" :key="project.id" mb="10px" :data="project" @task-canceled="handleTaskCanceled" />
+                            <ProjectStatusCard v-for="project in props.failedProjectList" :key="project.id" mb="10px" :data="project" />
                         </div>
                     </el-scrollbar>
                 </div>
