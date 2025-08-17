@@ -15,6 +15,10 @@ export const deleteProject = (projectId: number) => request.delete(`${window.rea
 
 export const threeDGSToObj = (projectId: number) => request.post(`${window.realSceneDataEngineConfig.apiBaseUrl}/threeDGS/toObj?project_id=${projectId}`, {}, { responseType: 'blob' })
 
+export const segmentProject = (projectId: number, prompt_text: string) => 
+    request.post(
+        `${window.realSceneDataEngineConfig.apiBaseUrl}/threeDGS/segmentGS?project_id=${projectId}&prompt_text=${prompt_text}`
+    );
 export const importProject = (formData: FormData) => request.post(
     `${window.realSceneDataEngineConfig.apiBaseUrl}/projects/import`, 
     formData, 
