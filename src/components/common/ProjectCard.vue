@@ -54,13 +54,16 @@ const threeDGSToObjLoadingDialogVisible = ref(false);
 const SegementProjectDialogVisible = ref(false);
 const segmentLoadingDialogVisible = ref(false);
 const segmentInput = ref(''); 
+
 const handleSegmentProjectConfirm = () => {
     if (!segmentInput.value) {
         ElMessage.error('请输入要分割的对象');
         return;
     }
+
     SegementProjectDialogVisible.value = false;
     segmentLoadingDialogVisible.value = true;
+
     segmentProject(props.data.id, segmentInput.value)
         .then((res) => {
             const downloadUrl = `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${res.data}`;
@@ -114,7 +117,6 @@ const projectImage = computed(() => {
         <div class="info-container" py="10px" flex items-center justify-between>
             <div class="left-container" max-w="50%">
                 <div class="name">{{ props.data.name }}</div>
-                <div class="algorithm" style="font-size: 12px; color: #888;">算法: {{ props.data.processed_file.algorithm }}</div>
             </div>
             <div class="right-container">
                 <el-popover placement="bottom-start" trigger="hover" width="220">
