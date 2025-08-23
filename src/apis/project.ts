@@ -19,6 +19,7 @@ export const segmentProject = (projectId: number, prompt_text: string) =>
     request.post(
         `${window.realSceneDataEngineConfig.apiBaseUrl}/threeDGS/segmentGS?project_id=${projectId}&prompt_text=${prompt_text}`
     );
+
 export const importProject = (formData: FormData) => request.post(
     `${window.realSceneDataEngineConfig.apiBaseUrl}/projects/import`, 
     formData, 
