@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { deleteProject, threeDGSToObj } from '@/apis/project';
+import { deleteProject, threeDGSToObj, segmentProject} from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
 import { computed, ref } from 'vue';
@@ -51,6 +51,55 @@ const handleExportToObj = () => {
 }
 
 const threeDGSToObjLoadingDialogVisible = ref(false);
+const SegementProjectDialogVisible = ref(false);
+const segmentLoadingDialogVisible = ref(false);
+const segmentInput = ref(''); 
+const handleSegmentProjectConfirm = () => {
+    if (!segmentInput.value) {
+        ElMessage.error('请输入要分割的对象');
+        return;
+    }
+    SegementProjectDialogVisible.value = false;
+    segmentLoadingDialogVisible.value = true;
+    segmentProject(props.data.id, segmentInput.value)
+        .then((res) => {
+            const downloadUrl = `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${res.data}`;
+            // 创建一个临时链接来触发文件下载
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            // 使用项目名称和分割对象构建文件名
+            const fileName = `${props.data.name}_${segmentInput.value}_segment.ply`;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            link.remove();
+            ElMessage.success('分割任务提交成功');
+            
+            segmentInput.value = '';
+        })
+        .catch((error) => {
+            if (error.response) {
+                const { status, data } = error.response;
+                switch (status) {
+                    case 404:
+                        ElMessage.error(data.detail || '项目或处理文件未找到');
+                        break;
+                    case 200:
+                        ElMessage.warning(data.detail || '该对象的分割文件已存在');
+                        segmentInput.value = '';
+                        break;
+                    default:
+                        ElMessage.error('分割任务提交失败');
+                }
+            } else {
+                ElMessage.error('分割任务提交失败');
+            }
+        })
+        .finally(() => {
+            segmentLoadingDialogVisible.value = false;
+        });
+}
 
 const projectImage = computed(() => {
     return `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.cover_image.filename}`
@@ -76,6 +125,7 @@ const projectImage = computed(() => {
                         <el-button text @click="handleDownloadThreeDGSData" w="full" m="0">导出3dgs数据</el-button>
                         <el-button text @click="handleExportToObj" w="full" m="0">转化成Mesh导出(Obj格式)</el-button>
                         <el-button text @click="handleDeleteProject" w="full" m="0">删除项目</el-button>
+                        <el-button text @click="SegementProjectDialogVisible = true" w="full" m="0">3dgs分割</el-button>
                     </div>
                 </el-popover>
             </div>
@@ -91,6 +141,49 @@ const projectImage = computed(() => {
         >
             3DGS数据正在转化Mesh中, 这个过程不会太久(小场景约30s~1min, 大场景约4min)且只有第一次转化时需要等待, 请稍等片刻...(转化完成后会自动下载)
         </el-dialog>
+        <el-dialog
+            v-model="SegementProjectDialogVisible"
+            title="3DGS分割"
+            width="500"
+            :append-to-body="true"
+        >
+            <template #default>
+                <div flex="~ col" gap="4">
+                    <p text="gray-600" mb="2">请输入要分割的场景中的对象名称,例如: 桌子、椅子、沙发等</p>
+                    <el-input 
+                        v-model="segmentInput"
+                        placeholder="请输入要分割的对象" 
+                        clearable
+                        @keyup.enter="handleSegmentProjectConfirm"
+                    />
+                    <div mt="4" text-right>
+                        <el-button @click="SegementProjectDialogVisible = false">取消</el-button>
+                        <el-button 
+                            type="primary" 
+                            @click="handleSegmentProjectConfirm"
+                            :disabled="!segmentInput"
+                        >
+                            确认分割
+                        </el-button>
+                    </div>
+                </div>
+            </template>
+        </el-dialog>
+        <el-dialog
+        v-model="segmentLoadingDialogVisible"
+        title="分割进行中"
+        width="500"
+        :append-to-body="true"
+        :show-close="false"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+    >
+        <div class="loading-content" flex="~ col" items-center gap="4">
+            <el-icon class="is-loading" size="24"><Loading /></el-icon>
+            <p>正在进行场景分割，请稍候...</p>
+            <p text="gray-500" text-sm>提示：分割过程可能需要几分钟，请勿关闭页面</p>
+        </div>
+    </el-dialog>
     </el-card>
 </template>
 
