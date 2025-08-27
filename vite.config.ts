@@ -26,4 +26,36 @@ export default defineConfig({
         '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/tags': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+      '/projects': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+      '/upload': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+      '/data-resources': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+      '/users': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+      '/sse': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+      '/three-d-gs': {
+        target: 'http://172.31.70.135:8888',
+        changeOrigin: true,
+      },
+    },
+  },
 })

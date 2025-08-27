@@ -3,6 +3,7 @@ import type { StaticFile } from "./staticFileTypes";
 export interface GetAssetListResponseData {
     code: number,
     data: DataAsset[],
+    total?: number,  // 总数据量，用于分页
     msg: string
 }
 

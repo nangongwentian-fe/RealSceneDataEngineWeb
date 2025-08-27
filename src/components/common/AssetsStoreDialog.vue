@@ -28,7 +28,8 @@ const assetList = ref<DataAsset[]>([]);
 const updateAssetList = async () => {
     const getAssetListResponse = await getAssetList(page.value, pageSize.value);
     console.log('数据资源列表:', getAssetListResponse);
-    total.value = getAssetListResponse.data.data.length;
+    // 使用后端返回的总数，如果没有则使用当前页数据长度
+    total.value = getAssetListResponse.data.total || getAssetListResponse.data.data.length;
     assetList.value = getAssetListResponse.data.data;
 };
 updateAssetList();
@@ -86,7 +87,13 @@ const addDataAssetItemSuccess = () => {
                 </el-scrollbar>
             </div>
             <div class="pagination-container" flex justify-center>
-                <el-pagination background layout="prev, pager, next" :total="total" />
+                <el-pagination 
+                    v-model:current-page="page"
+                    background 
+                    layout="prev, pager, next" 
+                    :total="total"
+                    @current-change="updateAssetList"
+                />
             </div>
             <!-- 新增数据资源弹窗 -->
             <AddDataAssetItemDialog v-model="addDataAssetItemDialogVisible" @add-success="addDataAssetItemSuccess" />

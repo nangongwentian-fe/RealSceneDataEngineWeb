@@ -3,12 +3,15 @@ import { deleteProject, threeDGSToObj, segmentProject} from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
 import { computed, ref } from 'vue';
+import { MoreFilled, Edit, Loading } from '@element-plus/icons-vue';
+import ProjectTagSelector from './ProjectTagSelector.vue';
 
 const props = defineProps<{
     data: Project
 }>()
 const emits = defineEmits<{
     deleteProjectSuccess: []
+    tagsUpdated: []
 }>()
 const handleViewProject = () => {
     window.open(`${window.realSceneDataEngineConfig.threeDGSViewer}?load=${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.processed_file.result_url}`, "_blank")
@@ -51,15 +54,17 @@ const handleExportToObj = () => {
 }
 
 const threeDGSToObjLoadingDialogVisible = ref(false);
-const SegementProjectDialogVisible = ref(false);
+const segementProjectDialogVisible = ref(false);
 const segmentLoadingDialogVisible = ref(false);
 const segmentInput = ref(''); 
+const tagSelectorVisible = ref(false);
+
 const handleSegmentProjectConfirm = () => {
     if (!segmentInput.value) {
         ElMessage.error('请输入要分割的对象');
         return;
     }
-    SegementProjectDialogVisible.value = false;
+    segementProjectDialogVisible.value = false;
     segmentLoadingDialogVisible.value = true;
     segmentProject(props.data.id, segmentInput.value)
         .then((res) => {
@@ -104,6 +109,15 @@ const handleSegmentProjectConfirm = () => {
 const projectImage = computed(() => {
     return `${window.realSceneDataEngineConfig.apiBaseUrl}/files/${props.data.cover_image.filename}`
 })
+
+const handleEditTags = (event: Event) => {
+    event.stopPropagation();
+    tagSelectorVisible.value = true;
+};
+
+const handleTagsUpdated = () => {
+    emits('tagsUpdated');
+};
 </script>
 
 <template>
@@ -111,23 +125,46 @@ const projectImage = computed(() => {
         maxWidth: '360px',
     }" cursor="pointer" @click="handleViewProject" w="320px">
         <img :src="projectImage" h="200px" w="100%" object-contain bg="#f4f4f4" />
-        <div class="info-container" py="10px" flex items-center justify-between>
-            <div class="left-container" max-w="50%">
-                <div class="name">{{ props.data.name }}</div>
-                <div class="algorithm" style="font-size: 12px; color: #888;">算法: {{ props.data.processed_file.algorithm }}</div>
+        <div class="info-container" py="10px">
+            <div class="project-header" flex items-center justify-between mb="8px">
+                <div class="left-container" max-w="60%">
+                    <div class="name">{{ props.data.name }}</div>
+                    <div class="algorithm" style="font-size: 12px; color: #888;">算法: {{ props.data.processed_file.algorithm }}</div>
+                </div>
+                <div class="right-container" @click.stop @mousedown.stop @mouseup.stop>
+                    <el-popover placement="bottom-start" trigger="hover" width="240" @click.stop @mousedown.stop @mouseup.stop>
+                        <template #reference>
+                            <el-icon size="20" @click.stop @mousedown.stop @mouseup.stop><MoreFilled /></el-icon>
+                        </template>
+                        <div class="btn-container" @click.stop @mousedown.stop @mouseup.stop>
+                            <el-button text @click="handleEditTags" w="full" m="0" :icon="Edit" @click.stop @mousedown.stop @mouseup.stop>编辑标签</el-button>
+                            <el-button text @click="handleDownloadThreeDGSData" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>导出3dgs数据</el-button>
+                            <el-button text @click="handleExportToObj" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>转化成Mesh导出(Obj格式)</el-button>
+                            <el-button text @click="segementProjectDialogVisible = true" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>3dgs分割</el-button>
+                            <el-button text @click="handleDeleteProject" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>删除项目</el-button>
+                        </div>
+                    </el-popover>
+                </div>
             </div>
-            <div class="right-container">
-                <el-popover placement="bottom-start" trigger="hover" width="220">
-                    <template #reference>
-                        <el-icon size="20"><MoreFilled /></el-icon>
-                    </template>
-                    <div class="btn-container">
-                        <el-button text @click="handleDownloadThreeDGSData" w="full" m="0">导出3dgs数据</el-button>
-                        <el-button text @click="handleExportToObj" w="full" m="0">转化成Mesh导出(Obj格式)</el-button>
-                        <el-button text @click="handleDeleteProject" w="full" m="0">删除项目</el-button>
-                        <el-button text @click="SegementProjectDialogVisible = true" w="full" m="0">3dgs分割</el-button>
-                    </div>
-                </el-popover>
+            <div class="tags-container" v-if="props.data.tags && props.data.tags.length > 0" @click.stop @mousedown.stop @mouseup.stop>
+                <el-tag
+                    v-for="tag in props.data.tags"
+                    :key="tag.id"
+                    :color="tag.color"
+                    :style="{ 
+                        color: '#fff',
+                        border: 'none',
+                        fontSize: '11px',
+                        marginRight: '4px',
+                        marginBottom: '4px'
+                    }"
+                    size="small"
+                    @click.stop
+                    @mousedown.stop
+                    @mouseup.stop
+                >
+                    {{ tag.name }}
+                </el-tag>
             </div>
         </div>
         <el-dialog
@@ -141,8 +178,9 @@ const projectImage = computed(() => {
         >
             3DGS数据正在转化Mesh中, 这个过程不会太久(小场景约30s~1min, 大场景约4min)且只有第一次转化时需要等待, 请稍等片刻...(转化完成后会自动下载)
         </el-dialog>
+        
         <el-dialog
-            v-model="SegementProjectDialogVisible"
+            v-model="segementProjectDialogVisible"
             title="3DGS分割"
             width="500"
             :append-to-body="true"
@@ -157,7 +195,7 @@ const projectImage = computed(() => {
                         @keyup.enter="handleSegmentProjectConfirm"
                     />
                     <div mt="4" text-right>
-                        <el-button @click="SegementProjectDialogVisible = false">取消</el-button>
+                        <el-button @click="segementProjectDialogVisible = false">取消</el-button>
                         <el-button 
                             type="primary" 
                             @click="handleSegmentProjectConfirm"
@@ -169,21 +207,28 @@ const projectImage = computed(() => {
                 </div>
             </template>
         </el-dialog>
+        
         <el-dialog
-        v-model="segmentLoadingDialogVisible"
-        title="分割进行中"
-        width="500"
-        :append-to-body="true"
-        :show-close="false"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-    >
-        <div class="loading-content" flex="~ col" items-center gap="4">
-            <el-icon class="is-loading" size="24"><Loading /></el-icon>
-            <p>正在进行场景分割，请稍候...</p>
-            <p text="gray-500" text-sm>提示：分割过程可能需要几分钟，请勿关闭页面</p>
-        </div>
-    </el-dialog>
+            v-model="segmentLoadingDialogVisible"
+            title="分割进行中"
+            width="500"
+            :append-to-body="true"
+            :show-close="false"
+            :close-on-click-modal="false"
+            :close-on-press-escape="false"
+        >
+            <div class="loading-content" flex="~ col" items-center gap="4">
+                <el-icon class="is-loading" size="24"><Loading /></el-icon>
+                <p>正在进行场景分割，请稍候...</p>
+                <p text="gray-500" text-sm>提示：分割过程可能需要几分钟，请勿关闭页面</p>
+            </div>
+        </el-dialog>
+        
+        <ProjectTagSelector 
+            v-model="tagSelectorVisible"
+            :project="props.data"
+            @tags-updated="handleTagsUpdated"
+        />
     </el-card>
 </template>
 

@@ -1,3 +1,5 @@
+import type { Tag } from './tagTypes';
+
 export interface AddProjectResponseData {
     id: number,
     name: string,
@@ -6,9 +8,19 @@ export interface AddProjectResponseData {
     project_cover_image_static_id: number
 }
 
+export interface PaginationInfo {
+    total: number,           // 总项目数
+    page: number,            // 当前页码
+    page_size: number,       // 每页数量
+    total_pages: number,     // 总页数
+    has_next: boolean,       // 是否有下一页
+    has_prev: boolean        // 是否有上一页
+}
+
 export interface GetProjectResponseData {
     code: number,
     data: Project[],
+    pagination: PaginationInfo,
     msg: string
 }
 
@@ -18,7 +30,8 @@ export interface Project {
     processed_file: ProcessedFile,
     static_file: StaticFile,
     cover_image: StaticFile,
-    algorithm: string
+    algorithm: string,
+    tags?: Tag[]
 }
 
 export interface ProcessedFile {
