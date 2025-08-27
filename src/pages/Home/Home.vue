@@ -7,8 +7,11 @@ import AddProjectDialog from '@/components/common/AddProjectDialog/AddProjectDia
 import { getProjectList } from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
-import { MessageBox } from '@element-plus/icons-vue';
+import { MessageBox, Setting } from '@element-plus/icons-vue';
 import ProcessingProjectDialog from '@/components/common/ProcessingProjectDialog.vue';
+import TagFilter from '@/components/common/TagFilter.vue';
+import TagManager from '@/components/common/TagManager.vue';
+import { getProjectsByTag } from '@/apis/tag';
 // @ts-ignore
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { useUpdateProjectListSSEHook } from './useUpdateProjectListSSEHook';
@@ -33,44 +36,72 @@ const handleAddProjectBtnClick = () => {
     addProjectDialogVisible.value = true;
 };
 
+// 标签管理相关
+const tagManagerVisible = ref(false);
+const selectedTagId = ref<number | null>(null);
+const handleTagManagerBtnClick = () => {
+    tagManagerVisible.value = true;
+};
+
+const handleTagFilterChange = (tagId: number | number[] | null) => {
+    // 如果返回的是数组，取第一个值；如果是单个值，直接使用
+    const selectedId = Array.isArray(tagId) ? (tagId.length > 0 ? tagId[0] : null) : tagId;
+    selectedTagId.value = selectedId;
+    page.value = 1;
+    updateProjectList();
+};
+
 const page = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(20); // 增加默认页面大小
 const total = ref(0);
 const projectList = ref<Project[]>([]);
 const trainedProjectList = ref<Project[]>([]);
 const failedProjectList = ref<Project[]>([]);
 const processingProjectList = ref<Project[]>([]);
+
 const updateProjectList = () => {
-    getProjectList(page.value, pageSize.value).then((getProjectListRes) => {
-        console.log('获取项目列表成功', getProjectListRes);
+    // 根据是否选择标签来决定调用哪个API
+    const apiCall = selectedTagId.value 
+        ? getProjectsByTag(selectedTagId.value, page.value, pageSize.value)
+        : getProjectList(page.value, pageSize.value);
+    
+    apiCall.then((getProjectListRes) => {
+        // 两个API返回的格式现在是相同的
         projectList.value = getProjectListRes.data.data;
+        total.value = getProjectListRes.data.pagination.total;
+        
+        // 同步分页信息
+        page.value = getProjectListRes.data.pagination.page;
+        pageSize.value = getProjectListRes.data.pagination.page_size;
+        
         trainedProjectList.value = projectList.value.filter((project) => {
-            if(project.processed_file.status === 'trained') {
-                return true;
-            } else {
-                return false;
-            }
+            return project.processed_file.status === 'trained';
         })
-        total.value = trainedProjectList.value.length;
         failedProjectList.value = projectList.value.filter((project) => {
-            if(project.processed_file.status === 'failed') {
-                return true;
-            } else {
-                return false;
-            }
+            return project.processed_file.status === 'failed';
         })
         processingProjectList.value = projectList.value.filter((project) => {
-            if(project.processed_file.status !== 'failed' && project.processed_file.status !== 'trained') {
-                return true;
-            } else {
-                return false;
-            }
+            return project.processed_file.status !== 'failed' && project.processed_file.status !== 'trained';
         })
-    }).catch(() => {
+    }).catch((error) => {
+        console.error('获取项目列表失败:', error);
         ElMessage.error('获取项目列表失败');
     })
 }
 updateProjectList();
+
+// 分页处理函数
+const handlePageChange = (newPage: number) => {
+    page.value = newPage;
+    updateProjectList();
+};
+
+const handleSizeChange = (newSize: number) => {
+    pageSize.value = newSize;
+    page.value = 1; // 重置到第一页
+    updateProjectList();
+};
+
 /** 使用 SSE 更新项目列表 */
 const {} = useUpdateProjectListSSEHook({
     updateProjectList
@@ -92,6 +123,10 @@ const handleDeleteProjectSuccess = () => {
 const handleRefreshProcessingList = () => {
     updateProjectList();
 }
+
+const handleTagsUpdated = () => {
+    updateProjectList();
+}
 </script>
 
 <template>
@@ -104,8 +139,16 @@ const handleRefreshProcessingList = () => {
                     <div class="title" text="20px #222222">
                         项目列表
                     </div>
+                    <div class="filter-container" ml="24px">
+                        <TagFilter 
+                            v-model="selectedTagId"
+                            placeholder="按标签筛选"
+                            @change="handleTagFilterChange"
+                        />
+                    </div>
                 </div>
                 <div class="right-container" flex items-center>
+                    <el-button :icon="Setting" size="large" @click="handleTagManagerBtnClick" mr="10px">标签管理</el-button>
                     <el-button type="primary" size="large" @click="handleAssetsStoreBtnClick">数据资源库</el-button>
                     <el-button type="primary" size="large" @click="handleAddProjectBtnClick" mr="10px">新建项目</el-button>
                     <el-tooltip
@@ -129,16 +172,26 @@ const handleRefreshProcessingList = () => {
                 </div>
             </div>
             <!-- 项目列表 -->
-            <div class="content-project-container" h="[calc(100%-48px-20px-40px)]">
+            <div class="content-project-container" h="[calc(100%-48px-20px-80px)]">
                 <el-scrollbar>
                     <div class="project-list" px="10px" py="10px" flex flex-wrap>
-                        <ProjectCard v-for="project in trainedProjectList" :key="project.id" :data="project" mr="10px" mb="10px" @delete-project-success="handleDeleteProjectSuccess" />
+                        <ProjectCard v-for="project in trainedProjectList" :key="project.id" :data="project" mr="10px" mb="10px" @delete-project-success="handleDeleteProjectSuccess" @tags-updated="handleTagsUpdated" />
                     </div>
                 </el-scrollbar>
             </div>
-            <div class="pagination-container" h="40px" flex items-center justify-center>
+            <div class="pagination-container">
                 <el-config-provider :locale="zhCn">
-                    <el-pagination v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[10, 20, 30]" background layout="total, sizes, prev, pager, next, jumper" :total="total" />
+                    <el-pagination 
+                        v-model:current-page="page" 
+                        v-model:page-size="pageSize" 
+                        :page-sizes="[10, 20, 30, 50, 100]" 
+                        background 
+                        layout="total, sizes, prev, pager, next, jumper" 
+                        :total="total"
+                        :hide-on-single-page="false"
+                        @current-change="handlePageChange"
+                        @size-change="handleSizeChange"
+                    />
                 </el-config-provider>
             </div>
         </div>
@@ -148,6 +201,62 @@ const handleRefreshProcessingList = () => {
     <AddProjectDialog v-model="addProjectDialogVisible" @add-project-success="handleAddProjectSuccess" />
     <ProcessingProjectDialog v-model="processingProjectDialogVisible"  :processing-project-list="processingProjectList" :failed-project-list="failedProjectList" @refresh-list="handleRefreshProcessingList"/>
     <ImportProjectDialog v-model="uploadProjectDialogVisible" />
+    <TagManager v-model="tagManagerVisible" />
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.pagination-container {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    padding: 10px;
+    background: #fff;
+    border-top: 1px solid #e4e7ed;
+    position: relative;
+    z-index: 10;
+    
+    :deep(.el-pagination) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .el-pagination__total,
+        .el-pagination__sizes,
+        .el-pagination__jump {
+            color: #606266;
+        }
+        
+        .el-pager li {
+            background-color: #fff;
+            border: 1px solid #dcdfe6;
+            
+            &.is-active {
+                background-color: #409eff;
+                color: #fff;
+                border-color: #409eff;
+            }
+            
+            &:hover {
+                color: #409eff;
+            }
+        }
+        
+        .btn-prev,
+        .btn-next {
+            background-color: #fff;
+            border: 1px solid #dcdfe6;
+            
+            &:hover {
+                color: #409eff;
+            }
+            
+            &.is-disabled {
+                color: #c0c4cc;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+</style>

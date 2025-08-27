@@ -10,10 +10,12 @@ declare module 'vue' {
     AddDataAssetItemDialog: typeof import('./src/components/common/AddDataAssetItemDialog.vue')['default']
     AddProjectDialog: typeof import('./src/components/common/AddProjectDialog/AddProjectDialog.vue')['default']
     AssetsStoreDialog: typeof import('./src/components/common/AssetsStoreDialog.vue')['default']
+    CreateTagDialog: typeof import('./src/components/common/CreateTagDialog.vue')['default']
     DataAssetListItem: typeof import('./src/components/common/DataAssetListItem.vue')['default']
     ElBadge: typeof import('element-plus/es')['ElBadge']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCard: typeof import('element-plus/es')['ElCard']
+    ElColorPicker: typeof import('element-plus/es')['ElColorPicker']
     ElConfigProvider: typeof import('element-plus/es')['ElConfigProvider']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElEmpty: typeof import('element-plus/es')['ElEmpty']
@@ -31,6 +33,7 @@ declare module 'vue' {
     ElSteps: typeof import('element-plus/es')['ElSteps']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
+    ElTag: typeof import('element-plus/es')['ElTag']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     Header: typeof import('./src/components/common/Header.vue')['default']
@@ -39,8 +42,14 @@ declare module 'vue' {
     ProcessingProjectDialog: typeof import('./src/components/common/ProcessingProjectDialog.vue')['default']
     ProjectCard: typeof import('./src/components/common/ProjectCard.vue')['default']
     ProjectStatusCard: typeof import('./src/components/common/ProjectStatusCard.vue')['default']
+    ProjectTagSelector: typeof import('./src/components/common/ProjectTagSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TagFilter: typeof import('./src/components/common/TagFilter.vue')['default']
+    TagManager: typeof import('./src/components/common/TagManager.vue')['default']
     VideoDataAssetDialog: typeof import('./src/components/common/VideoDataAssetDialog.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }
