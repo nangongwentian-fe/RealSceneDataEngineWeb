@@ -11,11 +11,8 @@ declare global {
 }
 
 const getApiBaseUrl = (): string => {
-    if (typeof window !== 'undefined' && window.realSceneDataEngineConfig?.apiBaseUrl) {
-        return window.realSceneDataEngineConfig.apiBaseUrl;
-    }
-    // 默认值，如果配置文件未加载
-    return 'http://172.31.70.135:8000';
+    return window.realSceneDataEngineConfig.apiBaseUrl;
+    
 };
 
 export const request = axios.create({
