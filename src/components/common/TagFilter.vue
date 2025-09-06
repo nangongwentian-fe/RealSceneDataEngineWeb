@@ -55,6 +55,16 @@ const fetchTags = async () => {
     }
 };
 
+// 暴露刷新标签列表的方法
+const refreshTags = () => {
+    fetchTags();
+};
+
+// 使用 defineExpose 暴露方法给父组件
+defineExpose({
+    refreshTags
+});
+
 onMounted(() => {
     fetchTags();
 });

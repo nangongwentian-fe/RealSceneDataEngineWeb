@@ -39,6 +39,8 @@ const handleAddProjectBtnClick = () => {
 // 标签管理相关
 const tagManagerVisible = ref(false);
 const selectedTagId = ref<number | null>(null);
+const tagFilterRef = ref<InstanceType<typeof TagFilter>>();
+
 const handleTagManagerBtnClick = () => {
     tagManagerVisible.value = true;
 };
@@ -127,6 +129,12 @@ const handleRefreshProcessingList = () => {
 const handleTagsUpdated = () => {
     updateProjectList();
 }
+
+// 处理标签管理中的标签更新（新建、编辑、删除）
+const handleTagManagerUpdated = () => {
+    // 刷新标签筛选组件的标签列表
+    tagFilterRef.value?.refreshTags();
+}
 </script>
 
 <template>
@@ -141,6 +149,7 @@ const handleTagsUpdated = () => {
                     </div>
                     <div class="filter-container" ml="24px">
                         <TagFilter 
+                            ref="tagFilterRef"
                             v-model="selectedTagId"
                             placeholder="按标签筛选"
                             @change="handleTagFilterChange"
@@ -201,7 +210,7 @@ const handleTagsUpdated = () => {
     <AddProjectDialog v-model="addProjectDialogVisible" @add-project-success="handleAddProjectSuccess" />
     <ProcessingProjectDialog v-model="processingProjectDialogVisible"  :processing-project-list="processingProjectList" :failed-project-list="failedProjectList" @refresh-list="handleRefreshProcessingList"/>
     <ImportProjectDialog v-model="uploadProjectDialogVisible" />
-    <TagManager v-model="tagManagerVisible" />
+    <TagManager v-model="tagManagerVisible" @tags-updated="handleTagManagerUpdated" />
 </template>
 
 <style lang="scss" scoped>

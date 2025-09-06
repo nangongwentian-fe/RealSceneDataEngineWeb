@@ -12,6 +12,7 @@ interface Props {
 
 interface Emits {
     (e: 'update:modelValue', value: boolean): void;
+    (e: 'tags-updated'): void;
 }
 
 const props = defineProps<Props>();
@@ -56,6 +57,8 @@ const handleCreateTag = () => {
 
 const handleTagCreated = () => {
     fetchTags();
+    // 通知父组件标签列表已更新
+    emits('tags-updated');
 };
 
 const handleEditTag = (tag: Tag) => {
@@ -81,6 +84,8 @@ const handleSaveEdit = async () => {
         editingTag.value = null;
         editForm.value = {};
         fetchTags();
+        // 通知父组件标签列表已更新
+        emits('tags-updated');
     } catch (error) {
         console.error('更新标签失败:', error);
         ElMessage.error('更新标签失败');
@@ -107,6 +112,8 @@ const handleDeleteTag = async (tag: Tag) => {
         await deleteTag(tag.id);
         ElMessage.success('删除标签成功');
         fetchTags();
+        // 通知父组件标签列表已更新
+        emits('tags-updated');
     } catch (error: any) {
         if (error !== 'cancel') {
             console.error('删除标签失败:', error);
