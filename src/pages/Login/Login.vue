@@ -2,8 +2,11 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-header">
-        <h2 class="login-title">实景数据引擎</h2>
-        <p class="login-subtitle">管理员登录</p>
+        <div class="logo-container">
+          <img src="@/assets/images/logo_03.png" alt="深圳大学Logo" class="szu-logo" />
+          <img src="@/assets/images/szuailab.png" alt="深圳大学腾讯云人工智能实验室" class="lab-logo" />
+        </div>
+        <h2 class="login-title">具身智能实景3D数据生产引擎</h2>
       </div>
       
       <el-form 
@@ -48,11 +51,6 @@
         </el-form-item>
       </el-form>
       
-      <div class="login-footer">
-        <p class="default-account-tip">
-          默认管理员账号: admin / admin123
-        </p>
-      </div>
     </div>
   </div>
 </template>
@@ -151,6 +149,26 @@ onMounted(() => {
 .login-header {
   text-align: center;
   margin-bottom: 32px;
+}
+
+.logo-container {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.szu-logo {
+  height: 50px;
+  object-fit: contain;
+}
+
+.lab-logo {
+  height: 50px;
+  max-width: 220px;
+  object-fit: contain;
 }
 
 .login-title {

@@ -43,7 +43,8 @@ export const useAuthStore = defineStore('auth', () => {
         const localAccounts = [
             { username: 'admin', password: 'admin123', name: '管理员', role: 'admin' },
             { username: 'user', password: 'user123', name: '用户', role: 'user' },
-            { username: 'test', password: 'test123', name: '测试用户', role: 'user' }
+            { username: 'test', password: 'test123', name: '测试用户', role: 'user' },
+            { username: 'wangxu', password: 'szuailab', name: '王旭', role: 'user' }
         ];
         
         const account = localAccounts.find(acc => acc.username === username && acc.password === password);
