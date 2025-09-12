@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { getTags } from '@/apis/tag';
+import { useAuthStore } from '@/stores/auth';
 import type { Tag } from '@/apis/tagTypes';
 import { ElMessage } from 'element-plus';
 
@@ -38,6 +39,15 @@ const selectedValue = computed({
         emits('update:modelValue', finalValue);
         emits('change', finalValue);
     }
+});
+
+const authStore = useAuthStore();
+
+const displayTags = computed(() => {
+    if (authStore.isAdmin) return tags.value;
+    const allowed = (authStore.user as any)?.allowedTags;
+    if (allowed === '*' || !Array.isArray(allowed)) return tags.value;
+    return tags.value.filter(t=>allowed.includes(t.id));
 });
 
 const fetchTags = async () => {
@@ -81,7 +91,7 @@ onMounted(() => {
         style="width: 200px"
     >
         <el-option
-            v-for="tag in tags"
+            v-for="tag in displayTags"
             :key="tag.id"
             :label="tag.name || `标签${tag.id}`"
             :value="tag.id"

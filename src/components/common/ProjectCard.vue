@@ -3,6 +3,7 @@ import { deleteProject, threeDGSToObj, segmentProject} from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
 import { computed, ref } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 import { MoreFilled, Edit, Loading } from '@element-plus/icons-vue';
 import ProjectTagSelector from './ProjectTagSelector.vue';
 
@@ -58,6 +59,16 @@ const segementProjectDialogVisible = ref(false);
 const segmentLoadingDialogVisible = ref(false);
 const segmentInput = ref(''); 
 const tagSelectorVisible = ref(false);
+
+// 显示标签过滤
+const authStore = useAuthStore();
+const displayTags = computed(() => {
+    if (!props.data.tags) return [];
+    if (authStore.isAdmin) return props.data.tags;
+    const allowed = (authStore.user as any)?.allowedTags;
+    if (allowed === '*' || !Array.isArray(allowed)) return props.data.tags;
+    return props.data.tags.filter(t=>allowed.includes(t.id));
+});
 
 const handleSegmentProjectConfirm = () => {
     if (!segmentInput.value) {
@@ -137,7 +148,9 @@ const handleTagsUpdated = () => {
                             <el-icon size="20" @click.stop @mousedown.stop @mouseup.stop><MoreFilled /></el-icon>
                         </template>
                         <div class="btn-container" @click.stop @mousedown.stop @mouseup.stop>
-                            <el-button text @click="handleEditTags" w="full" m="0" :icon="Edit" @click.stop @mousedown.stop @mouseup.stop>编辑标签</el-button>
+                            <el-button
+                                v-if="authStore.isAdmin"
+                                text @click="handleEditTags" w="full" m="0" :icon="Edit" @click.stop @mousedown.stop @mouseup.stop>编辑标签</el-button>
                             <el-button text @click="handleDownloadThreeDGSData" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>导出3dgs数据</el-button>
                             <el-button text @click="handleExportToObj" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>转化成Mesh导出(Obj格式)</el-button>
                             <el-button text @click="segementProjectDialogVisible = true" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>3dgs分割</el-button>
@@ -148,7 +161,7 @@ const handleTagsUpdated = () => {
             </div>
             <div class="tags-container" v-if="props.data.tags && props.data.tags.length > 0" @click.stop @mousedown.stop @mouseup.stop>
                 <el-tag
-                    v-for="tag in props.data.tags"
+                    v-for="tag in displayTags"
                     :key="tag.id"
                     :color="tag.color"
                     :style="{ 

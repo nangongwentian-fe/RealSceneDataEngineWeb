@@ -45,7 +45,13 @@ export const addProject = (name: string, staticFileId: number, projectCoverImage
     algorithm: algorithm
 })
 
-export const getProjectList = (page: number, pageSize: number) => request.get<GetProjectResponseData>(`${window.realSceneDataEngineConfig.apiBaseUrl}/projects/list?page=${page}&page_size=${pageSize}`)
+export const getProjectList = (page: number, pageSize: number, tagIds?: (string|number)[]) => {
+    let url = `${window.realSceneDataEngineConfig.apiBaseUrl}/projects/list?page=${page}&page_size=${pageSize}`;
+    if (tagIds && tagIds.length > 0) {
+        url += `&tag_ids=${tagIds.join(',')}`;
+    }
+    return request.get<GetProjectResponseData>(url);
+}
 
 export const getProjectStatus = (processedFileId: number) => request.get<GetProjectStatusResponseData>(`${window.realSceneDataEngineConfig.apiBaseUrl}/threeDGS/status/${processedFileId}`)
 

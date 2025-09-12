@@ -26,6 +26,16 @@ export const router = createRouter({
                 title: '首页',
                 requiresAuth: true
             }
+        },
+        {
+            path: '/admin/users',
+            name: 'UserList',
+            component: () => import('@/pages/Admin/UserList.vue'),
+            meta: {
+                title: '用户管理',
+                requiresAuth: true,
+                adminOnly: true
+            }
         }
     ]
 });
@@ -50,8 +60,13 @@ router.beforeEach((to, _from, next) => {
                 query: { redirect: to.fullPath } // 保存原始路径，登录后跳转
             });
         } else {
-            // 已登录，允许访问
-            next();
+            // 已登录，额外检查 adminOnly
+            if (to.meta?.adminOnly && !authStore.isAdmin) {
+                ElMessage.error('仅管理员可访问');
+                next('/home');
+            } else {
+                next();
+            }
         }
     } else {
         // 不需要认证的路由

@@ -1,21 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton, ElAvatar } from 'element-plus';
-import { User, SwitchButton } from '@element-plus/icons-vue';
+import { User, SwitchButton, Setting } from '@element-plus/icons-vue';
 
 const authStore = useAuthStore();
+const router = useRouter();
 
 // 计算属性
 const currentUser = computed(() => authStore.user);
 const isLoggedIn = computed(() => authStore.isLoggedIn);
+
+const displayName = computed(() => currentUser.value?.name || currentUser.value?.username || currentUser.value?.email || '用户');
+const roleText = computed(() => currentUser.value?.role === 'admin' ? '管理员' : '用户');
+const isAdmin = computed(() => currentUser.value?.role === 'admin');
 
 /**
  * 处理退出登录
  */
 const handleLogout = async () => {
     await authStore.logout();
-    // 路由跳转由axios拦截器处理
+    // 主动跳转到登录页面
+    router.push('/login');
+};
+
+const handleCommand = (cmd:string)=>{
+  if(cmd==='logout') handleLogout();
+  if(cmd==='admin') router.push('/admin/users');
 };
 </script>
 
@@ -29,12 +41,12 @@ const handleLogout = async () => {
         <div class="right-container" flex items-center>
             <!-- 用户信息区域 -->
             <div v-if="isLoggedIn" class="user-info" flex items-center>
-                <el-dropdown trigger="click" @command="handleLogout">
+                <el-dropdown trigger="click" @command="handleCommand">
                     <div class="user-dropdown" flex items-center cursor-pointer px="12px" py="8px" rounded="6px" hover:bg-gray-50>
                         <el-avatar :size="32" :icon="User" class="mr-8px" />
                         <div class="user-details" flex flex-col>
-                            <span class="username" text="14px #303133" font-medium>{{ currentUser?.username }}</span>
-                            <span class="role" text="12px #909399">管理员</span>
+                            <span class="username" text="14px #303133" font-medium>{{ displayName }}</span>
+                            <span class="role" text="12px #909399">{{ roleText }}</span>
                         </div>
                         <el-icon class="ml-8px" text="12px #909399">
                             <arrow-down />
@@ -42,6 +54,12 @@ const handleLogout = async () => {
                     </div>
                     <template #dropdown>
                         <el-dropdown-menu>
+                            <el-dropdown-item 
+                                v-if="isAdmin" 
+                                command="admin" 
+                                :icon="Setting">
+                                后台管理
+                            </el-dropdown-item>
                             <el-dropdown-item command="logout" :icon="SwitchButton">
                                 退出登录
                             </el-dropdown-item>

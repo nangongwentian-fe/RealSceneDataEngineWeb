@@ -8,62 +8,74 @@
         </div>
         <h2 class="login-title">具身智能实景3D数据生产引擎</h2>
       </div>
-      
-      <el-form 
-        ref="loginFormRef" 
-        :model="loginForm" 
-        :rules="loginRules" 
-        class="login-form"
-        @keyup.enter="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="请输入用户名"
-            size="large"
-            prefix-icon="User"
-            :disabled="loading"
-          />
-        </el-form-item>
-        
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            prefix-icon="Lock"
-            :disabled="loading"
-            show-password
-          />
-        </el-form-item>
-        
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            class="login-button"
-            :loading="loading"
-            @click="handleLogin"
-          >
-            {{ loading ? '登录中...' : '登录' }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-      
+
+      <el-tabs v-model="activeTab" stretch>
+        <el-tab-pane label="登录" name="login">
+          <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form" @keyup.enter="handleLogin">
+            <!-- 原登录表单 -->
+            <el-form-item prop="username">
+              <el-input v-model="loginForm.username" placeholder="用户名 / 邮箱" />
+            </el-form-item>
+            <el-form-item prop="password">
+              <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" class="login-button" :loading="loading" @click="handleLogin">登录</el-button>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <el-tab-pane label="注册" name="register">
+          <el-form ref="regRef" :model="regForm" :rules="regRules" class="login-form" @keyup.enter="handleRegister">
+            <el-form-item prop="name">
+              <el-input v-model="regForm.name" placeholder="用户名" />
+            </el-form-item>
+
+            <el-form-item prop="email">
+              <el-input v-model="regForm.email" placeholder="邮箱" />
+            </el-form-item>
+            <el-form-item prop="password">
+              <el-input v-model="regForm.password" type="password" placeholder="密码" show-password />
+            </el-form-item>
+            <el-form-item prop="confirm">
+              <el-input v-model="regForm.confirm" type="password" placeholder="确认密码" show-password />
+            </el-form-item>
+
+            <el-form-item prop="code">
+              <el-input v-model="regForm.code" placeholder="验证码">
+                <template #suffix>
+                  <el-button link type="primary" :disabled="count>0 || !canSendCode" @click="handleSendCode">
+                    {{ count>0 ? `${count}s` : '获取验证码' }}
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+
+            <el-form-item>
+              <el-button type="primary" class="login-button" :loading="loading" :disabled="loading || !canRegister" @click="handleRegister">注册并登录</el-button>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElForm } from 'element-plus';
+import type { FormItemRule } from 'element-plus';
+import { request } from '@/apis';
 import { useAuthStore } from '@/stores/auth';
+import { ElMessage } from 'element-plus';
+import { sendCode, registerApi } from '@/apis/auth';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+
+const activeTab = ref<'login'|'register'>('login');
 
 // 表单引用
 const loginFormRef = ref<InstanceType<typeof ElForm>>();
@@ -88,6 +100,148 @@ const loginRules = {
 
 // 加载状态
 const loading = ref(false);
+
+// register part
+const regRef = ref<InstanceType<typeof ElForm>>();
+const regForm = reactive({ name:'', email:'', code:'', password:'', confirm:'' });
+
+const emailValidator = (_rule:any, v:string, cb:(err?:Error)=>void)=>{
+  if(!v) {
+    formValidationState.emailValid = false;
+    return cb(new Error('请输入邮箱'));
+  }   
+  const format=/^[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(v);
+  if(!format) {
+    formValidationState.emailValid = false;
+    return cb(new Error('邮箱格式不正确'));
+  }
+  
+  request.get('/users/check',{ params:{ email:v }})
+    .then(res => {
+      if(res.data.emailExists) {
+        formValidationState.emailValid = false;
+        return cb(new Error('邮箱已注册'));
+      }
+      formValidationState.emailValid = true;
+      cb();
+    })
+    .catch(() => {
+      formValidationState.emailValid = false;
+      cb(new Error('验证失败'));
+    });
+};
+
+const nameValidator = (_rule:any, v:string, cb:(err?:Error)=>void)=>{
+  if(!v) {
+    formValidationState.nameValid = false;
+    return cb(new Error('请输入用户名'));
+  }
+  if(v.length<2||v.length>20) {
+    formValidationState.nameValid = false;
+    return cb(new Error('2~20位用户名'));
+  }
+  
+  request.get('/users/check',{ params:{ name:v }})
+    .then(res => {
+      if(res.data.nameExists) {
+        formValidationState.nameValid = false;
+        return cb(new Error('用户名已占用'));
+      }
+      formValidationState.nameValid = true;
+      cb();
+    })
+    .catch(() => {
+      formValidationState.nameValid = false;
+      cb(new Error('验证失败'));
+    });
+};
+
+const passwordValidator = (_:any, v:string, cb:(err?:Error)=>void) => {
+  if(!v) {
+    formValidationState.passwordValid = false;
+    return cb(new Error('请输入密码'));
+  }
+  const isValid = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$/.test(v);
+  if(!isValid) {
+    formValidationState.passwordValid = false;
+    return cb(new Error('8~20位,含字母和数字'));
+  }
+  formValidationState.passwordValid = true;
+  // 密码变化时重新验证确认密码
+  if(regForm.confirm) {
+    formValidationState.confirmValid = regForm.confirm === v;
+  }
+  cb();
+};
+
+const confirmValidator = (_:any, v:string, cb:(err?:Error)=>void) => {
+  if(!v) {
+    formValidationState.confirmValid = false;
+    return cb(new Error('请确认密码'));
+  }
+  const isValid = v === regForm.password;
+  if(!isValid) {
+    formValidationState.confirmValid = false;
+    return cb(new Error('两次密码不一致'));
+  }
+  formValidationState.confirmValid = true;
+  cb();
+};
+
+const regRules: Record<string, FormItemRule[]> = {
+  name:[{ validator:nameValidator, trigger:'blur' }],
+  email:[{ validator:emailValidator, trigger:'blur' }],
+  code:[{ required:true, len:6, message:'6位验证码', trigger:'blur'}],
+  password:[{ validator:passwordValidator, trigger:'blur' }],
+  confirm:[{ validator:confirmValidator, trigger:'blur' }]
+};
+
+const count = ref(0);
+let timer:any;
+
+// 表单验证状态
+const formValidationState = reactive({
+  nameValid: false,
+  emailValid: false,
+  passwordValid: false,
+  confirmValid: false
+});
+
+const canSendCode = computed(()=>{
+  return formValidationState.nameValid && 
+         formValidationState.emailValid &&
+         formValidationState.passwordValid &&
+         formValidationState.confirmValid;
+});
+
+const canRegister = computed(()=>{
+  return canSendCode.value && regForm.code.length===6;
+});
+
+const handleSendCode = async () => {
+  if(count.value>0) return;
+  if(!regForm.email){ ElMessage.error('请输入邮箱'); return; }
+  try{ await sendCode(regForm.email); ElMessage.success('验证码已发送');
+    count.value=60;
+    clearInterval(timer);
+    timer=setInterval(()=>{ if(--count.value===0) clearInterval(timer); },1000);
+  }catch(e){ ElMessage.error('发送失败'); }
+};
+
+const handleRegister = async () => {
+  if (!regRef.value) return;
+  const ok = await regRef.value?.validate().catch(()=>false);
+  if(!ok) return;
+  loading.value=true;
+  try{
+    const {name,email,password,code}=regForm;
+    const res=await registerApi({name,email,password,code});
+    ElMessage.success('注册成功，已自动登录');
+    await authStore.processLoginResponse(res.data);
+    router.push('/home');
+  }catch(e){ ElMessage.error('注册失败'); }
+  finally{ loading.value=false; }
+};
 
 /**
  * 处理登录

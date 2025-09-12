@@ -5,13 +5,13 @@ import { ref } from 'vue';
 import AssetsStoreDialog from '@/components/common/AssetsStoreDialog.vue';
 import AddProjectDialog from '@/components/common/AddProjectDialog/AddProjectDialog.vue';
 import { getProjectList } from '@/apis/project';
+import { useAuthStore } from '@/stores/auth';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
 import { MessageBox, Setting } from '@element-plus/icons-vue';
 import ProcessingProjectDialog from '@/components/common/ProcessingProjectDialog.vue';
 import TagFilter from '@/components/common/TagFilter.vue';
 import TagManager from '@/components/common/TagManager.vue';
-import { getProjectsByTag } from '@/apis/tag';
 // @ts-ignore
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { useUpdateProjectListSSEHook } from './useUpdateProjectListSSEHook';
@@ -61,15 +61,31 @@ const trainedProjectList = ref<Project[]>([]);
 const failedProjectList = ref<Project[]>([]);
 const processingProjectList = ref<Project[]>([]);
 
+const authStore = useAuthStore();
+
 const updateProjectList = () => {
-    // 根据是否选择标签来决定调用哪个API
-    const apiCall = selectedTagId.value 
-        ? getProjectsByTag(selectedTagId.value, page.value, pageSize.value)
-        : getProjectList(page.value, pageSize.value);
+    let tagIds: (string|number)[] = [];
+    if (selectedTagId.value) {
+        tagIds = [selectedTagId.value];
+    } // admin or non-admin default tagIds stays []
+
+    const apiCall = tagIds.length >0 ?
+        getProjectList(page.value, pageSize.value, tagIds):
+        getProjectList(page.value, pageSize.value);
     
     apiCall.then((getProjectListRes) => {
         // 两个API返回的格式现在是相同的
-        projectList.value = getProjectListRes.data.data;
+        let list = getProjectListRes.data.data as any[];
+        if(!authStore.isAdmin){
+          const allowed = (authStore.user as any)?.allowedTags;
+          if(Array.isArray(allowed) && allowed.length>0){
+            list = list.filter(p=>{
+              if(!p.tags || p.tags.length===0) return true; // untagged visible
+              return p.tags.some((t:any)=>allowed.includes(t.id));
+            });
+          }
+        }
+        projectList.value = list;
         total.value = getProjectListRes.data.pagination.total;
         
         // 同步分页信息
@@ -157,7 +173,7 @@ const handleTagManagerUpdated = () => {
                     </div>
                 </div>
                 <div class="right-container" flex items-center>
-                    <el-button :icon="Setting" size="large" @click="handleTagManagerBtnClick" mr="10px">标签管理</el-button>
+                    <el-button v-if="authStore.isAdmin" :icon="Setting" size="large" @click="handleTagManagerBtnClick" mr="10px">标签管理</el-button>
                     <el-button type="primary" size="large" @click="handleAssetsStoreBtnClick">数据资源库</el-button>
                     <el-button type="primary" size="large" @click="handleAddProjectBtnClick" mr="10px">新建项目</el-button>
                     <el-tooltip

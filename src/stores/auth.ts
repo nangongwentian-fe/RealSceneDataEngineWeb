@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { User, UserRole } from '@/apis/userTypes';
+import type { User, UserRole, LoginResponseData } from '@/apis/userTypes';
 import { login as loginApi, getUserInfo, logout as logoutApi } from '@/apis/auth';
 import { ElMessage } from 'element-plus';
 
@@ -16,6 +16,17 @@ export const useAuthStore = defineStore('auth', () => {
     // 计算属性
     const isLoggedIn = computed(() => !!token.value && !!user.value);
     const isAdmin = computed(() => user.value?.role === 'admin');
+
+    /**
+     * 判断当前用户是否拥有某个 tag 的访问权限
+     */
+    const hasTagAccess = (tag: string): boolean => {
+        if (!user.value) return false;
+        if (isAdmin.value) return true;
+        const allowed = (user.value as any).allowedTags;
+        if (allowed === '*' ) return true;
+        return Array.isArray(allowed) && allowed.includes(tag);
+    };
 
     /**
      * 初始化认证状态（从localStorage恢复）
@@ -44,7 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
             { username: 'admin', password: 'admin123', name: '管理员', role: 'admin' },
             { username: 'user', password: 'user123', name: '用户', role: 'user' },
             { username: 'test', password: 'test123', name: '测试用户', role: 'user' },
-            { username: 'wangxu', password: 'szuailab', name: '王旭', role: 'user' }
+            { username: 'wangxu', password: 'szuailab', name: '王旭', role: 'admin' }
         ];
         
         const account = localAccounts.find(acc => acc.username === username && acc.password === password);
@@ -57,7 +68,8 @@ export const useAuthStore = defineStore('auth', () => {
                 username: account.username,
                 role: account.role as UserRole,
                 createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                allowedTags: '*' as '*'
             };
             
             token.value = tempToken;
@@ -81,19 +93,15 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true;
             const response = await loginApi({ username, password });
-            
-            if (response.data.code === 200) {
-                token.value = response.data.data.token;
-                user.value = response.data.data.user;
-                
-                // 保存到localStorage
-                localStorage.setItem('auth_token', token.value);
-                localStorage.setItem('auth_user', JSON.stringify(user.value));
-                
+
+            // 新后端直接返回 access_token / role / allowedTags
+            const res=response.data as LoginResponseData;
+            if (response.status === 200 && res.access_token) {
+                await processLoginResponse(res);
                 ElMessage.success('登录成功');
                 return true;
             } else {
-                ElMessage.error(response.data.message || '登录失败');
+                ElMessage.error('登录失败');
                 return false;
             }
         } catch (error: any) {
@@ -120,8 +128,8 @@ export const useAuthStore = defineStore('auth', () => {
     const fetchUserInfo = async () => {
         try {
             const response = await getUserInfo();
-            if (response.data.code === 200) {
-                user.value = response.data.data;
+            if (response.status === 200) {
+                user.value = response.data;
                 localStorage.setItem('auth_user', JSON.stringify(user.value));
                 return true;
             } else {
@@ -174,6 +182,13 @@ export const useAuthStore = defineStore('auth', () => {
         return {};
     };
 
+    /** 统一处理登录/注册接口返回 */
+    const processLoginResponse = async (data: LoginResponseData) => {
+        token.value = data.access_token;
+        localStorage.setItem('auth_token', token.value);
+        await fetchUserInfo();
+    };
+
     return {
         // 状态
         token,
@@ -182,12 +197,14 @@ export const useAuthStore = defineStore('auth', () => {
         // 计算属性
         isLoggedIn,
         isAdmin,
+        hasTagAccess,
         // 方法
         initAuth,
         login,
         logout,
         fetchUserInfo,
         clearAuth,
-        setAuthHeader
+        setAuthHeader,
+        processLoginResponse
     };
 });
