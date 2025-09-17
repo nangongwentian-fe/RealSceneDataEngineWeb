@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { createTag } from '@/apis/tag';
 import type { CreateTagRequest } from '@/apis/tagTypes';
 import { ElMessage } from 'element-plus';
@@ -63,37 +63,65 @@ const handleClose = () => {
     };
     dialogVisible.value = false;
 };
+
+// 移动端检测
+const isMobile = ref(false);
+
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768;
+};
+
+onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+});
 </script>
 
 <template>
     <el-dialog 
         v-model="dialogVisible"
         title="新建标签"
-        width="500px"
+        :width="isMobile ? '95%' : '500px'"
         :show-close="true"
         :close-on-click-modal="false"
+        :append-to-body="true"
         @close="handleClose"
     >
-        <el-form :model="formData" label-width="80px" label-position="left">
+        <el-form :model="formData" 
+                 :label-width="isMobile ? '80px' : '80px'" 
+                 :label-position="isMobile ? 'top' : 'left'"
+                 class="mobile-form">
             <el-form-item label="标签名称" required>
                 <el-input 
                     v-model="formData.name" 
                     placeholder="请输入标签名称"
                     maxlength="50"
                     show-word-limit
+                    :size="isMobile ? 'large' : 'default'"
+                    class="mobile-input"
                 />
             </el-form-item>
             
             <el-form-item label="标签颜色">
-                <div class="color-section">
-                    <el-color-picker v-model="formData.color" size="default" />
-                    <div class="predefined-colors">
+                <div class="color-section" 
+                     :class="[isMobile ? 'mobile-color-section' : '']">
+                    <el-color-picker v-model="formData.color" 
+                                     :size="isMobile ? 'default' : 'default'" />
+                    <div class="predefined-colors" 
+                         :class="[isMobile ? 'mobile-predefined-colors' : '']">
                         <div 
                             v-for="color in predefinedColors"
                             :key="color"
-                            class="color-item"
+                            class="color-item mobile-touchable"
+                            :class="[
+                                { active: formData.color === color },
+                                isMobile ? 'mobile-color-item' : ''
+                            ]"
                             :style="{ backgroundColor: color }"
-                            :class="{ active: formData.color === color }"
                             @click="formData.color = color"
                         />
                     </div>
@@ -104,10 +132,12 @@ const handleClose = () => {
                 <el-input 
                     v-model="formData.description"
                     type="textarea"
-                    :rows="3"
+                    :rows="isMobile ? 4 : 3"
                     placeholder="请输入标签描述（可选）"
                     maxlength="200"
                     show-word-limit
+                    :size="isMobile ? 'large' : 'default'"
+                    class="mobile-input"
                 />
             </el-form-item>
             
@@ -118,7 +148,8 @@ const handleClose = () => {
                         :style="{ 
                             color: '#fff',
                             border: 'none',
-                            fontSize: '12px'
+                            fontSize: isMobile ? '14px' : '12px',
+                            padding: isMobile ? '6px 12px' : '4px 8px'
                         }"
                     >
                         {{ formData.name || '标签预览' }}
@@ -128,14 +159,24 @@ const handleClose = () => {
         </el-form>
 
         <template #footer>
-            <el-button @click="handleClose">取消</el-button>
-            <el-button 
-                type="primary" 
-                @click="handleConfirm"
-                :loading="loading"
-            >
-                确认创建
-            </el-button>
+            <div :class="[
+                'flex gap-2',
+                isMobile ? 'justify-center' : 'justify-end'
+            ]">
+                <el-button v-if="!isMobile" 
+                           @click="handleClose"
+                           size="default">取消</el-button>
+                <el-button 
+                    type="primary" 
+                    @click="handleConfirm"
+                    :loading="loading"
+                    :size="isMobile ? 'large' : 'default'"
+                    :class="[isMobile ? 'w-full' : '']"
+                    class="mobile-btn"
+                >
+                    确认创建
+                </el-button>
+            </div>
         </template>
     </el-dialog>
 </template>
@@ -146,10 +187,21 @@ const handleClose = () => {
     align-items: center;
     gap: 16px;
 
+    &.mobile-color-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
     .predefined-colors {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
+
+        &.mobile-predefined-colors {
+            gap: 12px;
+            justify-content: flex-start;
+        }
 
         .color-item {
             width: 20px;
@@ -158,6 +210,12 @@ const handleClose = () => {
             cursor: pointer;
             border: 2px solid transparent;
             transition: all 0.2s;
+
+            &.mobile-color-item {
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+            }
 
             &:hover {
                 transform: scale(1.1);
@@ -174,6 +232,41 @@ const handleClose = () => {
 .tag-preview {
     .el-tag {
         font-size: 12px;
+    }
+}
+
+// 移动端表单优化
+@media (max-width: 768px) {
+    .mobile-form {
+        .el-form-item {
+            margin-bottom: 20px;
+            
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+        
+        .el-form-item__label {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        
+        .el-input,
+        .el-textarea {
+            width: 100%;
+        }
+        
+        .el-textarea__inner {
+            font-size: 16px !important; // 防止iOS缩放
+        }
+    }
+}
+
+// 移动端对话框footer优化
+@media (max-width: 768px) {
+    :deep(.el-dialog__footer) {
+        padding: 16px 20px;
     }
 }
 </style>

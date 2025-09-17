@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { listUsers, updateUserTags } from '@/apis/admin';
 import { getTags } from '@/apis/tag';
 import { ElMessage } from 'element-plus';
@@ -31,21 +31,43 @@ const fetchUsers = async () => {
 
 const router = useRouter();
 
-// tag map
-const tagMap = ref<Record<number,string>>({});
+// tag map - 存储完整的标签信息（包括颜色）
+const tagMap = ref<Record<number, {name: string, color: string}>>({});
 const fetchTags = async()=>{
   try{const res=await getTags();
-      res.data.data.forEach((t:any)=>{tagMap.value[t.id]=t.name});
+      res.data.data.forEach((t:any)=>{
+        tagMap.value[t.id] = {
+          name: t.name,
+          color: t.color
+        };
+      });
   }catch(e){/* ignore*/}
 };
 
-// fetchUsers inside onMounted also call fetchTags
-onMounted(()=>{fetchUsers();fetchTags();});
+// 移动端检测逻辑已移到下面，移除重复的onMounted
 
 // 编辑弹窗
 const dialogVisible = ref(false);
 const editingUser = ref<UserRow | null>(null);
 const selectedTags = ref<number[]>([]);
+
+// 移动端检测
+const isMobile = ref(false);
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
+
+onMounted(() => {
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  fetchUsers();
+  fetchTags();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile);
+});
 
 const openTagDialog = (row: UserRow) => {
   editingUser.value = row;
@@ -67,24 +89,109 @@ const saveTags = async () => {
 </script>
 
 <template>
-  <div p="24">
-    <div style="margin-bottom:16px">
-      <el-button @click="router.push('/home')">返回首页</el-button>
+  <div :class="['safe-area-top safe-area-bottom', isMobile ? 'p-4' : 'p-24']">
+    <div :class="[isMobile ? 'mb-4' : 'mb-16px']">
+      <el-button @click="router.push('/home')" 
+                 :size="isMobile ? 'default' : 'default'"
+                 class="mobile-btn">返回首页</el-button>
     </div>
-    <el-table :data="users" v-loading="loading" style="width: 100%">
+    
+    <!-- 移动端卡片式布局 -->
+    <div v-if="isMobile" class="mobile-user-list">
+      <div v-loading="loading" class="space-y-3">
+        <div v-for="user in users" :key="user.id" 
+             class="mobile-card p-4 rounded-lg border border-gray-200 bg-white">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-16px font-medium text-gray-900 truncate">{{ user.name }}</h3>
+              <p class="text-14px text-gray-500 truncate">{{ user.email }}</p>
+            </div>
+            <span :class="['px-2 py-1 rounded text-12px font-medium', 
+                          user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800']">
+              {{ user.role === 'admin' ? '管理员' : '用户' }}
+            </span>
+          </div>
+          
+          <div class="mb-3">
+            <p class="text-12px text-gray-600 mb-1">可见标签：</p>
+            <div class="flex flex-wrap gap-1">
+              <template v-if="user.role==='admin'">
+                <span class="px-2 py-1 rounded text-12px font-medium bg-green-100 text-green-800">全部</span>
+              </template>
+              <template v-else-if="user.allowedTags.length===0">
+                <span class="px-2 py-1 rounded text-12px bg-gray-100 text-gray-500">无</span>
+              </template>
+              <template v-else>
+                <el-tag v-for="tagId in user.allowedTags" 
+                        :key="tagId"
+                        :color="tagMap[tagId]?.color || '#409eff'"
+                        size="small"
+                        :style="{ 
+                          color: '#fff',
+                          border: 'none',
+                          fontSize: '12px',
+                          padding: '4px 8px',
+                          marginRight: '4px',
+                          marginBottom: '4px'
+                        }">
+                  {{ tagMap[tagId]?.name || tagId }}
+                </el-tag>
+              </template>
+            </div>
+          </div>
+          
+          <div class="flex justify-end">
+            <span v-if="user.role==='admin'" class="text-gray-400 text-14px">—</span>
+            <el-button v-else 
+                       size="small" 
+                       type="primary" 
+                       class="mobile-btn"
+                       @click="openTagDialog(user)">编辑标签</el-button>
+          </div>
+        </div>
+        
+        <div v-if="users.length === 0 && !loading" 
+             class="text-center text-gray-500 py-8">
+          暂无用户数据
+        </div>
+      </div>
+    </div>
+    
+    <!-- 桌面端表格布局 -->
+    <el-table v-else 
+              :data="users" 
+              v-loading="loading" 
+              style="width: 100%">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="姓名" />
       <el-table-column prop="email" label="邮箱" />
       <el-table-column prop="role" label="角色" width="100" />
-      <el-table-column label="可见标签">
+      <el-table-column label="可见标签" min-width="200">
         <template #default="{ row }">
-          <span>
-            <template v-if="row.role==='admin'">全部</template>
-            <template v-else-if="row.allowedTags.length===0">无</template>
-            <template v-else>
-              {{ row.allowedTags.map((id:number)=>tagMap[id]||id).join(', ') }}
+          <div class="flex flex-wrap gap-1">
+            <template v-if="row.role==='admin'">
+              <span class="px-2 py-1 rounded text-12px font-medium bg-green-100 text-green-800">全部</span>
             </template>
-          </span>
+            <template v-else-if="row.allowedTags.length===0">
+              <span class="px-2 py-1 rounded text-12px bg-gray-100 text-gray-500">无</span>
+            </template>
+            <template v-else>
+              <el-tag v-for="tagId in row.allowedTags" 
+                      :key="tagId"
+                      :color="tagMap[tagId]?.color || '#409eff'"
+                      size="small"
+                      :style="{ 
+                        color: '#fff',
+                        border: 'none',
+                        fontSize: '12px',
+                        padding: '2px 6px',
+                        marginRight: '4px',
+                        marginBottom: '2px'
+                      }">
+                {{ tagMap[tagId]?.name || tagId }}
+              </el-tag>
+            </template>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="操作" width="120">
@@ -95,11 +202,24 @@ const saveTags = async () => {
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" title="编辑可见标签" width="400">
-      <TagFilter v-model="selectedTags" multiple placeholder="选择标签" />
+    <el-dialog v-model="dialogVisible" 
+               title="编辑可见标签" 
+               :width="isMobile ? '90%' : '400px'"
+               :append-to-body="true">
+      <TagFilter v-model="selectedTags" 
+                 multiple 
+                 placeholder="选择标签" 
+                 class="mobile-input" />
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveTags">保存</el-button>
+        <div :class="[isMobile ? 'space-x-2' : '']">
+          <el-button @click="dialogVisible = false"
+                     :size="isMobile ? 'default' : 'default'"
+                     class="mobile-btn">取消</el-button>
+          <el-button type="primary" 
+                     @click="saveTags"
+                     :size="isMobile ? 'default' : 'default'"
+                     class="mobile-btn">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>

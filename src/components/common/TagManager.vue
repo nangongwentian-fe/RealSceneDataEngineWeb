@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { getTags, deleteTag, updateTag } from '@/apis/tag';
 import type { Tag, UpdateTagRequest } from '@/apis/tagTypes';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -122,8 +122,21 @@ const handleDeleteTag = async (tag: Tag) => {
     }
 };
 
+// 移动端检测
+const isMobile = ref(false);
+
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768;
+};
+
 onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
     fetchTags();
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
 });
 </script>
 
@@ -131,20 +144,33 @@ onMounted(() => {
     <el-dialog 
         v-model="visible"
         title="标签管理"
-        width="600px"
+        :width="isMobile ? '95%' : '600px'"
         :show-close="true"
-        top="5vh"
+        :top="isMobile ? '5vh' : '5vh'"
+        :append-to-body="true"
     >
         <div class="tag-manager">
-            <div class="header">
-                <el-button type="primary" :icon="Plus" @click="handleCreateTag">
-                    新建标签
+            <div class="header" :class="[isMobile ? 'mb-3' : 'mb-4']">
+                <el-button type="primary" 
+                           :icon="Plus" 
+                           :size="isMobile ? 'default' : 'default'"
+                           class="mobile-btn"
+                           @click="handleCreateTag">
+                    <span class="hidden sm:inline">新建标签</span>
+                    <span class="sm:hidden">新建</span>
                 </el-button>
             </div>
 
-            <div class="tag-list" v-loading="loading">
+            <div class="tag-list" 
+                 v-loading="loading"
+                 :class="[isMobile ? 'max-h-400px' : 'max-h-400px', 'overflow-y-auto']">
                 <div v-if="tags.length === 0 && !loading" class="empty-state">
-                    <el-empty description="暂无标签，点击上方按钮创建第一个标签" />
+                    <div class="mobile-empty">
+                        <div class="text-center text-gray-500 py-8">
+                            <div class="text-16px mb-2">暂无标签</div>
+                            <div class="text-14px">点击上方按钮创建第一个标签</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div v-else class="tags-container">
@@ -152,80 +178,119 @@ onMounted(() => {
                         v-for="tag in tags"
                         :key="tag.id"
                         class="tag-item"
-                        :class="{ editing: editingTag?.id === tag.id }"
+                        :class="[
+                            { editing: editingTag?.id === tag.id },
+                            isMobile ? 'mobile-tag-item' : ''
+                        ]"
                     >
                         <template v-if="editingTag?.id === tag.id">
                             <div class="edit-form">
-                                <div class="form-row">
+                                <div class="form-row" 
+                                     :class="[isMobile ? 'flex-col gap-2' : 'flex gap-3 items-center']">
                                     <el-input 
                                         v-model="editForm.name"
                                         placeholder="标签名称"
-                                        size="small"
+                                        :size="isMobile ? 'default' : 'small'"
+                                        class="mobile-input"
                                         maxlength="50"
                                     />
                                     <el-color-picker 
                                         v-model="editForm.color"
-                                        size="small"
+                                        :size="isMobile ? 'default' : 'small'"
                                     />
                                 </div>
-                                <div class="color-options">
+                                <div class="color-options" 
+                                     :class="[isMobile ? 'gap-2 mb-3' : 'gap-2 mb-3']">
                                     <div 
                                         v-for="color in predefinedColors"
                                         :key="color"
-                                        class="color-option"
+                                        class="color-option mobile-touchable"
+                                        :class="[
+                                            { active: editForm.color === color },
+                                            isMobile ? 'w-8 h-8' : 'w-6 h-6'
+                                        ]"
                                         :style="{ backgroundColor: color }"
-                                        :class="{ active: editForm.color === color }"
                                         @click="editForm.color = color"
                                     />
                                 </div>
                                 <el-input 
                                     v-model="editForm.description"
                                     type="textarea"
-                                    :rows="2"
+                                    :rows="isMobile ? 3 : 2"
                                     placeholder="标签描述（可选）"
-                                    size="small"
+                                    :size="isMobile ? 'default' : 'small'"
+                                    class="mobile-input"
                                     maxlength="200"
                                 />
-                                <div class="actions">
-                                    <el-button size="small" @click="handleCancelEdit">取消</el-button>
-                                    <el-button type="primary" size="small" @click="handleSaveEdit">保存</el-button>
+                                <div class="actions" 
+                                     :class="[
+                                         'flex justify-end gap-2',
+                                         isMobile ? 'mt-3' : 'mt-2'
+                                     ]">
+                                    <el-button :size="isMobile ? 'default' : 'small'" 
+                                               class="mobile-btn"
+                                               @click="handleCancelEdit">取消</el-button>
+                                    <el-button type="primary" 
+                                               :size="isMobile ? 'default' : 'small'" 
+                                               class="mobile-btn"
+                                               @click="handleSaveEdit">保存</el-button>
                                 </div>
                             </div>
                         </template>
                         
                         <template v-else>
-                            <div class="tag-info">
+                            <div class="tag-info" 
+                                 :class="[isMobile ? 'flex-col items-start gap-2' : 'flex items-start gap-4']">
                                 <div class="tag-display">
                                     <el-tag 
                                         :color="tag.color"
                                         :style="{ 
                                             color: '#fff',
-                                            border: 'none'
+                                            border: 'none',
+                                            fontSize: isMobile ? '14px' : '14px',
+                                            padding: isMobile ? '6px 12px' : '4px 12px'
                                         }"
                                     >
                                         {{ tag.name }}
                                     </el-tag>
                                 </div>
-                                <div class="tag-meta">
-                                    <div v-if="tag.description" class="description">
+                                <div class="tag-meta" :class="[isMobile ? 'w-full' : 'flex-1']">
+                                    <div v-if="tag.description" 
+                                         class="description" 
+                                         :class="[
+                                             'text-gray-600 mb-1',
+                                             isMobile ? 'text-14px' : 'text-14px'
+                                         ]">
                                         {{ tag.description }}
                                     </div>
-                                    <div class="date">
+                                    <div class="date" 
+                                         :class="[
+                                             'text-gray-500',
+                                             isMobile ? 'text-12px' : 'text-12px'
+                                         ]">
                                         创建时间：{{ new Date(tag.created_at).toLocaleDateString() }}
                                     </div>
                                 </div>
                             </div>
-                            <div class="tag-actions">
-                                <el-button size="small" :icon="Edit" @click="handleEditTag(tag)">
-                                    编辑
+                            <div class="tag-actions" 
+                                 :class="[
+                                     'flex gap-2',
+                                     isMobile ? 'mt-3 justify-end' : 'ml-auto'
+                                 ]">
+                                <el-button :size="isMobile ? 'default' : 'small'" 
+                                           :icon="Edit" 
+                                           class="mobile-btn"
+                                           @click="handleEditTag(tag)">
+                                    <span class="hidden sm:inline ml-1">编辑</span>
                                 </el-button>
                                 <el-button 
-                                    size="small" 
+                                    :size="isMobile ? 'default' : 'small'" 
                                     type="danger" 
                                     :icon="Delete" 
+                                    class="mobile-btn"
                                     @click="handleDeleteTag(tag)"
                                 >
-                                    删除
+                                    <span class="hidden sm:inline ml-1">删除</span>
                                 </el-button>
                             </div>
                         </template>
@@ -279,18 +344,29 @@ onMounted(() => {
             justify-content: space-between;
             align-items: center;
         }
+        
+        // 移动端样式
+        &.mobile-tag-item {
+            padding: 12px;
+            
+            &:not(.editing) {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
     }
 
     .tag-info {
         flex: 1;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
 
         .tag-display {
             .el-tag {
                 font-size: 14px;
                 padding: 4px 12px;
+                margin-top: 2px; // 微调对齐
             }
         }
 

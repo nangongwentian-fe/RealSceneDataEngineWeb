@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import "@/assets/styles/global.scss"
+import "@/assets/styles/mobile.scss"
 import App from './App.vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'

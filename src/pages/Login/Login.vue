@@ -1,12 +1,15 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
+  <div class="login-container safe-area-top safe-area-bottom">
+    <div class="login-card mobile-card">
       <div class="login-header">
         <div class="logo-container">
           <img src="@/assets/images/logo_03.png" alt="深圳大学Logo" class="szu-logo" />
           <img src="@/assets/images/szuailab.png" alt="深圳大学腾讯云人工智能实验室" class="lab-logo" />
         </div>
-        <h2 class="login-title">具身智能实景3D数据生产引擎</h2>
+        <h2 class="login-title">
+          <span class="hidden md:inline">具身智能实景3D数据生产引擎</span>
+          <span class="md:hidden">具身智能实景3D数据生产引擎</span>
+        </h2>
       </div>
 
       <el-tabs v-model="activeTab" stretch>
@@ -14,13 +17,25 @@
           <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form" @keyup.enter="handleLogin">
             <!-- 原登录表单 -->
             <el-form-item prop="username">
-              <el-input v-model="loginForm.username" placeholder="用户名 / 邮箱" />
+              <el-input v-model="loginForm.username" 
+                        placeholder="用户名 / 邮箱" 
+                        class="mobile-input"
+                        size="large" />
             </el-form-item>
             <el-form-item prop="password">
-              <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password />
+              <el-input v-model="loginForm.password" 
+                        type="password" 
+                        placeholder="密码" 
+                        show-password 
+                        class="mobile-input"
+                        size="large" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" class="login-button" :loading="loading" @click="handleLogin">登录</el-button>
+              <el-button type="primary" 
+                         class="login-button mobile-btn" 
+                         :loading="loading" 
+                         size="large"
+                         @click="handleLogin">登录</el-button>
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -28,23 +43,46 @@
         <el-tab-pane label="注册" name="register">
           <el-form ref="regRef" :model="regForm" :rules="regRules" class="login-form" @keyup.enter="handleRegister">
             <el-form-item prop="name">
-              <el-input v-model="regForm.name" placeholder="用户名" />
+              <el-input v-model="regForm.name" 
+                        placeholder="用户名" 
+                        class="mobile-input"
+                        size="large" />
             </el-form-item>
 
             <el-form-item prop="email">
-              <el-input v-model="regForm.email" placeholder="邮箱" />
+              <el-input v-model="regForm.email" 
+                        placeholder="邮箱" 
+                        class="mobile-input"
+                        size="large" />
             </el-form-item>
             <el-form-item prop="password">
-              <el-input v-model="regForm.password" type="password" placeholder="密码" show-password />
+              <el-input v-model="regForm.password" 
+                        type="password" 
+                        placeholder="密码" 
+                        show-password 
+                        class="mobile-input"
+                        size="large" />
             </el-form-item>
             <el-form-item prop="confirm">
-              <el-input v-model="regForm.confirm" type="password" placeholder="确认密码" show-password />
+              <el-input v-model="regForm.confirm" 
+                        type="password" 
+                        placeholder="确认密码" 
+                        show-password 
+                        class="mobile-input"
+                        size="large" />
             </el-form-item>
 
             <el-form-item prop="code">
-              <el-input v-model="regForm.code" placeholder="验证码">
+              <el-input v-model="regForm.code" 
+                        placeholder="验证码" 
+                        class="mobile-input"
+                        size="large">
                 <template #suffix>
-                  <el-button link type="primary" :disabled="count>0 || !canSendCode" @click="handleSendCode">
+                  <el-button link 
+                             type="primary" 
+                             :disabled="count>0 || !canSendCode" 
+                             class="mobile-btn"
+                             @click="handleSendCode">
                     {{ count>0 ? `${count}s` : '获取验证码' }}
                   </el-button>
                 </template>
@@ -52,7 +90,12 @@
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" class="login-button" :loading="loading" :disabled="loading || !canRegister" @click="handleRegister">注册并登录</el-button>
+              <el-button type="primary" 
+                         class="login-button mobile-btn" 
+                         :loading="loading" 
+                         :disabled="loading || !canRegister" 
+                         size="large"
+                         @click="handleRegister">注册并登录</el-button>
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -366,15 +409,145 @@ onMounted(() => {
   line-height: 1.5;
 }
 
-/* 响应式设计 */
-@media (max-width: 480px) {
+/* 移动端响应式设计 */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px;
+    min-height: 100vh;
+    min-height: 100dvh; /* 动态视口高度，适配移动端 */
+  }
+  
   .login-card {
-    padding: 24px;
-    margin: 16px;
+    padding: 20px;
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
+    border-radius: 16px;
+  }
+  
+  .login-header {
+    margin-bottom: 24px;
+  }
+  
+  .logo-container {
+    margin-bottom: 16px;
+    gap: 15px;
+  }
+  
+  .szu-logo {
+    height: 40px;
+  }
+  
+  .lab-logo {
+    height: 40px;
+    max-width: 180px;
   }
   
   .login-title {
-    font-size: 20px;
+    font-size: 18px;
+    line-height: 1.3;
+  }
+  
+  .login-form .el-form-item {
+    margin-bottom: 16px;
+  }
+  
+  .login-button {
+    height: 48px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+  
+  /* 优化标签页在移动端的显示 */
+  :deep(.el-tabs__header) {
+    margin: 0 0 20px 0;
+  }
+  
+  :deep(.el-tabs__item) {
+    font-size: 16px;
+    padding: 0 16px;
+    height: 44px;
+    line-height: 44px;
+  }
+  
+  /* 移动端输入框优化 */
+  :deep(.el-input__wrapper) {
+    border-radius: 8px;
+    min-height: 48px;
+  }
+  
+  :deep(.el-input__inner) {
+    font-size: 16px !important; /* 防止iOS缩放 */
+    line-height: 1.5;
+  }
+}
+
+/* 小屏幕手机适配 */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 12px;
+  }
+  
+  .login-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .logo-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .szu-logo, .lab-logo {
+    height: 36px;
+  }
+  
+  .lab-logo {
+    max-width: 160px;
+  }
+  
+  .login-title {
+    font-size: 16px;
+  }
+}
+
+/* 横屏模式适配 */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .login-container {
+    padding: 8px;
+  }
+  
+  .login-card {
+    padding: 16px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .login-header {
+    margin-bottom: 16px;
+  }
+  
+  .logo-container {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+  
+  .szu-logo, .lab-logo {
+    height: 32px;
+  }
+  
+  .login-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .login-form .el-form-item {
+    margin-bottom: 12px;
+  }
+  
+  .login-button {
+    height: 40px;
+    font-size: 14px;
   }
 }
 </style>

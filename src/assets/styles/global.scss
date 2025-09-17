@@ -5,6 +5,13 @@ body,
     height: 100%;
     margin: 0;
     font-family: 'Tencent';
+    /* 移动端字体大小调整 */
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+    /* 移动端触摸优化 */
+    -webkit-tap-highlight-color: transparent;
+    /* 移动端滚动优化 */
+    -webkit-overflow-scrolling: touch;
 }
 
 * {
@@ -24,4 +31,50 @@ body,
     --el-color-primary-light-8: #c8d8ff !important;
     --el-color-primary-light-9: #e1e9ff !important;
     --el-color-primary-dark-2: #0145cc !important;
+}
+
+/* 移动端基础样式 */
+@media (max-width: 768px) {
+    /* 确保移动端输入框字体大小不小于16px，防止iOS缩放 */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+    
+    /* 移动端按钮优化 */
+    button, .el-button {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    
+    /* 移动端滚动条隐藏 */
+    ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+    }
+}
+
+/* 移动端横屏适配 */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .mobile-landscape-optimize {
+        padding: 8px !important;
+    }
+}
+
+/* 移动端安全区域适配 */
+@supports (padding: env(safe-area-inset-top)) {
+    .safe-area-top {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .safe-area-left {
+        padding-left: env(safe-area-inset-left);
+    }
+    
+    .safe-area-right {
+        padding-right: env(safe-area-inset-right);
+    }
 }

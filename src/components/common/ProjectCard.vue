@@ -2,7 +2,7 @@
 import { deleteProject, threeDGSToObj, segmentProject} from '@/apis/project';
 import type { Project } from '@/apis/projectTypes';
 import { ElMessage } from 'element-plus';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { MoreFilled, Edit, Loading } from '@element-plus/icons-vue';
 import ProjectTagSelector from './ProjectTagSelector.vue';
@@ -59,6 +59,22 @@ const segementProjectDialogVisible = ref(false);
 const segmentLoadingDialogVisible = ref(false);
 const segmentInput = ref(''); 
 const tagSelectorVisible = ref(false);
+
+// 移动端检测
+const isMobile = ref(false);
+
+const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768;
+};
+
+onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+});
 
 // 显示标签过滤
 const authStore = useAuthStore();
@@ -132,34 +148,94 @@ const handleTagsUpdated = () => {
 </script>
 
 <template>
-    <el-card class="project-card" shadow="hover" :style="{
-        maxWidth: '360px',
-    }" cursor="pointer" @click="handleViewProject" w="320px">
-        <img :src="projectImage" h="200px" w="100%" object-contain bg="#f4f4f4" />
-        <div class="info-container" py="10px">
-            <div class="project-header" flex items-center justify-between mb="8px">
-                <div class="left-container" max-w="60%">
-                    <div class="name">{{ props.data.name }}</div>
-                    <div class="algorithm" style="font-size: 12px; color: #888;">算法: {{ props.data.processed_file.algorithm }}</div>
+    <el-card class="project-card mobile-card" 
+             shadow="hover" 
+             :class="['cursor-pointer', 'touch-manipulation', isMobile ? 'w-full' : 'w-320px']"
+             :style="isMobile ? {} : { maxWidth: '360px' }"
+             @click="handleViewProject">
+        <img :src="projectImage" 
+             :class="['w-full object-contain bg-gray-100', isMobile ? 'h-180px' : 'h-200px']" />
+        <div class="info-container" :class="[isMobile ? 'py-3' : 'py-10px']">
+            <div class="project-header" 
+                 :class="['flex items-center justify-between', isMobile ? 'mb-2' : 'mb-8px']">
+                <div class="left-container" :class="[isMobile ? 'max-w-70%' : 'max-w-60%']">
+                    <div class="name" 
+                         :class="[isMobile ? 'text-16px font-medium' : 'text-14px', 'text-gray-800', 'truncate']">
+                        {{ props.data.name }}
+                    </div>
+                    <div class="algorithm" 
+                         :class="[isMobile ? 'text-12px' : 'text-12px', 'text-gray-500', 'mt-1']">
+                        算法: {{ props.data.processed_file.algorithm }}
+                    </div>
                 </div>
                 <div class="right-container" @click.stop @mousedown.stop @mouseup.stop>
-                    <el-popover placement="bottom-start" trigger="hover" width="240" @click.stop @mousedown.stop @mouseup.stop>
+                    <el-popover :placement="isMobile ? 'bottom-end' : 'bottom-start'" 
+                                :trigger="isMobile ? 'click' : 'hover'" 
+                                :width="isMobile ? 200 : 240" 
+                                @click.stop @mousedown.stop @mouseup.stop>
                         <template #reference>
-                            <el-icon size="20" @click.stop @mousedown.stop @mouseup.stop><MoreFilled /></el-icon>
+                            <el-icon :size="isMobile ? 18 : 20" 
+                                     class="touch-manipulation" 
+                                     @click.stop @mousedown.stop @mouseup.stop>
+                                <MoreFilled />
+                            </el-icon>
                         </template>
                         <div class="btn-container" @click.stop @mousedown.stop @mouseup.stop>
                             <el-button
                                 v-if="authStore.isAdmin"
-                                text @click="handleEditTags" w="full" m="0" :icon="Edit" @click.stop @mousedown.stop @mouseup.stop>编辑标签</el-button>
-                            <el-button text @click="handleDownloadThreeDGSData" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>导出3dgs数据</el-button>
-                            <el-button text @click="handleExportToObj" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>转化成Mesh导出(Obj格式)</el-button>
-                            <el-button text @click="segementProjectDialogVisible = true" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>3dgs分割</el-button>
-                            <el-button text @click="handleDeleteProject" w="full" m="0" @click.stop @mousedown.stop @mouseup.stop>删除项目</el-button>
+                                text 
+                                @click="handleEditTags" 
+                                w="full" 
+                                m="0" 
+                                :icon="Edit" 
+                                :size="isMobile ? 'default' : 'default'"
+                                class="mobile-btn"
+                                @click.stop @mousedown.stop @mouseup.stop>
+                                <span class="truncate">编辑标签</span>
+                            </el-button>
+                            <el-button text 
+                                       @click="handleDownloadThreeDGSData" 
+                                       w="full" 
+                                       m="0" 
+                                       :size="isMobile ? 'default' : 'default'"
+                                       class="mobile-btn"
+                                       @click.stop @mousedown.stop @mouseup.stop>
+                                <span class="truncate">导出3DGS数据</span>
+                            </el-button>
+                            <el-button text 
+                                       @click="handleExportToObj" 
+                                       w="full" 
+                                       m="0" 
+                                       :size="isMobile ? 'default' : 'default'"
+                                       class="mobile-btn"
+                                       @click.stop @mousedown.stop @mouseup.stop>
+                                <span class="truncate">转化成Mesh导出</span>
+                            </el-button>
+                            <el-button text 
+                                       @click="segementProjectDialogVisible = true" 
+                                       w="full" 
+                                       m="0" 
+                                       :size="isMobile ? 'default' : 'default'"
+                                       class="mobile-btn"
+                                       @click.stop @mousedown.stop @mouseup.stop>
+                                <span class="truncate">3DGS分割</span>
+                            </el-button>
+                            <el-button text 
+                                       @click="handleDeleteProject" 
+                                       w="full" 
+                                       m="0" 
+                                       :size="isMobile ? 'default' : 'default'"
+                                       class="mobile-btn"
+                                       @click.stop @mousedown.stop @mouseup.stop>
+                                <span class="truncate">删除项目</span>
+                            </el-button>
                         </div>
                     </el-popover>
                 </div>
             </div>
-            <div class="tags-container" v-if="props.data.tags && props.data.tags.length > 0" @click.stop @mousedown.stop @mouseup.stop>
+            <div class="tags-container" 
+                 v-if="props.data.tags && props.data.tags.length > 0" 
+                 @click.stop @mousedown.stop @mouseup.stop>
                 <el-tag
                     v-for="tag in displayTags"
                     :key="tag.id"
@@ -167,11 +243,11 @@ const handleTagsUpdated = () => {
                     :style="{ 
                         color: '#fff',
                         border: 'none',
-                        fontSize: '11px',
+                        fontSize: isMobile ? '10px' : '11px',
                         marginRight: '4px',
                         marginBottom: '4px'
                     }"
-                    size="small"
+                    :size="isMobile ? 'small' : 'small'"
                     @click.stop
                     @mousedown.stop
                     @mouseup.stop
@@ -183,36 +259,45 @@ const handleTagsUpdated = () => {
         <el-dialog
             v-model="threeDGSToObjLoadingDialogVisible"
             title="Tips"
-            width="500"
+            :width="isMobile ? '90%' : '500px'"
             :append-to-body="true"
             :show-close="false"
             :close-on-click-modal="false"
             :close-on-press-escape="false"
         >
-            3DGS数据正在转化Mesh中, 这个过程不会太久(小场景约30s~1min, 大场景约4min)且只有第一次转化时需要等待, 请稍等片刻...(转化完成后会自动下载)
+            <div :class="[isMobile ? 'text-14px' : 'text-16px', 'leading-relaxed']">
+                3DGS数据正在转化Mesh中, 这个过程不会太久(小场景约30s~1min, 大场景约4min)且只有第一次转化时需要等待, 请稍等片刻...(转化完成后会自动下载)
+            </div>
         </el-dialog>
         
         <el-dialog
             v-model="segementProjectDialogVisible"
             title="3DGS分割"
-            width="500"
+            :width="isMobile ? '90%' : '500px'"
             :append-to-body="true"
         >
             <template #default>
-                <div flex="~ col" gap="4">
-                    <p text="gray-600" mb="2">请输入要分割的场景中的对象名称,例如: 桌子、椅子、沙发等</p>
+                <div :class="['flex flex-col', isMobile ? 'gap-3' : 'gap-4']">
+                    <p :class="['text-gray-600', isMobile ? 'mb-1 text-14px' : 'mb-2', 'leading-relaxed']">
+                        请输入要分割的场景中的对象名称,例如: 桌子、椅子、沙发等
+                    </p>
                     <el-input 
                         v-model="segmentInput"
                         placeholder="请输入要分割的对象" 
                         clearable
+                        class="mobile-input"
                         @keyup.enter="handleSegmentProjectConfirm"
                     />
-                    <div mt="4" text-right>
-                        <el-button @click="segementProjectDialogVisible = false">取消</el-button>
+                    <div :class="[isMobile ? 'mt-3' : 'mt-4', 'text-right', 'space-x-2']">
+                        <el-button @click="segementProjectDialogVisible = false" 
+                                   :size="isMobile ? 'default' : 'default'"
+                                   class="mobile-btn">取消</el-button>
                         <el-button 
                             type="primary" 
                             @click="handleSegmentProjectConfirm"
                             :disabled="!segmentInput"
+                            :size="isMobile ? 'default' : 'default'"
+                            class="mobile-btn"
                         >
                             确认分割
                         </el-button>
@@ -224,16 +309,19 @@ const handleTagsUpdated = () => {
         <el-dialog
             v-model="segmentLoadingDialogVisible"
             title="分割进行中"
-            width="500"
+            :width="isMobile ? '90%' : '500px'"
             :append-to-body="true"
             :show-close="false"
             :close-on-click-modal="false"
             :close-on-press-escape="false"
         >
-            <div class="loading-content" flex="~ col" items-center gap="4">
-                <el-icon class="is-loading" size="24"><Loading /></el-icon>
-                <p>正在进行场景分割，请稍候...</p>
-                <p text="gray-500" text-sm>提示：分割过程可能需要几分钟，请勿关闭页面</p>
+            <div class="loading-content" 
+                 :class="['flex flex-col items-center', isMobile ? 'gap-3' : 'gap-4']">
+                <el-icon class="is-loading" :size="isMobile ? 20 : 24"><Loading /></el-icon>
+                <p :class="[isMobile ? 'text-14px' : 'text-16px']">正在进行场景分割，请稍候...</p>
+                <p :class="['text-gray-500', isMobile ? 'text-12px' : 'text-sm', 'text-center', 'leading-relaxed']">
+                    提示：分割过程可能需要几分钟，请勿关闭页面
+                </p>
             </div>
         </el-dialog>
         

@@ -1,4 +1,4 @@
 var realSceneDataEngineConfig = {
-    apiBaseUrl: "http://172.31.70.135:8000",
-    threeDGSViewer: "http://172.31.70.135:8889"
+    apiBaseUrl: "http://43.139.169.167:8888",
+    threeDGSViewer: "http://43.139.169.167:8889"
 }
